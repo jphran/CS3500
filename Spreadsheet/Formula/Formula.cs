@@ -1,6 +1,7 @@
 ﻿// Skeleton written by Joe Zachary for CS 3500, January 2019
 // Edited by Justin Francis, Jan 2019 v0.1
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using static Formulas.TokenType;
@@ -16,6 +17,7 @@ namespace Formulas
     /// </summary>
     public class Formula
     {
+        private string formula;
         /// <summary>
         /// Creates a Formula from a string that consists of a standard infix expression composed
         /// from non-negative floating-point numbers (using C#-like syntax for double/int literals), 
@@ -38,6 +40,9 @@ namespace Formulas
         /// </summary>
         public Formula(String formula)
         {
+            this.formula = formula;
+
+
         }
         /// <summary>
         /// Evaluates this Formula, using the Lookup delegate to determine the values of variables.  (The
@@ -50,6 +55,34 @@ namespace Formulas
         /// </summary>
         public double Evaluate(Lookup lookup)
         {
+            Stack values = new Stack();
+            Stack operators = new Stack();
+
+            foreach(Tuple<string, TokenType> t in GetTokens(formula))
+            {
+                // TESTTESTTESTTEST
+                if(t.Item2 == Number)
+                { 
+                    if(operators.Peek().Equals('*') || operators.Peek().Equals('/'))
+                    {
+                        values.Push(values.Pop())
+                    }
+                    values.Push(t.Item1);
+                }
+                else if(t.Item2 == Var)
+                {
+
+                }
+                else if(t.Item2 == Invalid)
+                {
+                    throw new FormulaEvaluationException("Formula contains invalid sytax, please try again");
+                }
+                else if(t.Item2 == LParen || t.Item2 == RParen)
+                {
+                    
+                }
+            }
+
             return 0;
         }
 
@@ -116,6 +149,7 @@ namespace Formulas
                     else if (match.Groups[7].Success)
                     {
                         type = Invalid;
+                        throw new FormulaFormatException("Formula is syntatically invalid, please retry");
                     }
                     else
                     {
