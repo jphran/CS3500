@@ -65,7 +65,7 @@ namespace Formulas
                 { 
                     if(operators.Peek().Equals('*') || operators.Peek().Equals('/'))
                     {
-                        values.Push(values.Pop())
+                        values.Push(values.Pop());
                     }
                     values.Push(t.Item1);
                 }
