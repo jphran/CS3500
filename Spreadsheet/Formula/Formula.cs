@@ -41,6 +41,13 @@ namespace Formulas
         public Formula(String formula)
         {
             this.formula = formula;
+            foreach (Tuple<string, TokenType> t in GetTokens(formula))
+            {
+                if(t.Item2 == Invalid)
+                {
+                    throw new FormulaFormatException("Forumula contains invalid syntax, please try again");
+                }
+            }
 
 
         }
