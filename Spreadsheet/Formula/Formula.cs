@@ -1,5 +1,5 @@
 ﻿// Skeleton written by Joe Zachary for CS 3500, January 2019
-//Edited by Justin Francis, Jan 2019
+// Edited by Justin Francis, Jan 2019 v0.1
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
