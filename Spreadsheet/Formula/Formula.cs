@@ -60,7 +60,6 @@ namespace Formulas
 
             foreach(Tuple<string, TokenType> t in GetTokens(formula))
             {
-                // TESTTESTTESTTEST
                 if(t.Item2 == Number)
                 { 
                     if(operators.Peek().Equals('*') || operators.Peek().Equals('/'))
