@@ -41,9 +41,11 @@ namespace Formulas
         public Formula(String formula)
         {
             this.formula = formula;
+
             foreach (Tuple<string, TokenType> t in GetTokens(formula))
             {
-                if(t.Item2 == Invalid)
+                
+                if(t.Item2 == Invalid || t == null)
                 {
                     throw new FormulaFormatException("Forumula contains invalid syntax, please try again");
                 }
@@ -62,36 +64,154 @@ namespace Formulas
         /// </summary>
         public double Evaluate(Lookup lookup)
         {
-            Stack values = new Stack();
-            Stack operators = new Stack();
+            Stack<double> values = new Stack<double>();
+            Stack<string> operators = new Stack<string>();
 
             foreach(Tuple<string, TokenType> t in GetTokens(formula))
             {
-                if(t.Item2 == Number)
-                { 
-                    if(operators.Peek().Equals('*') || operators.Peek().Equals('/'))
-                    {
-                        values.Push(values.Pop());
-                    }
-                    values.Push(t.Item1);
-                }
-                else if(t.Item2 == Var)
-                {
+                IEnumerator operatorEnum = operators.GetEnumerator();
 
+                TokenType tokenType = t.Item2;
+                string token = t.Item1;
+
+                if(tokenType.Equals(Number))
+                {
+                    if (OpPeek(operators))
+                    {
+                        if (operators.Peek().Equals("*"))
+                        {
+                            operators.Pop();
+                            values.Push(values.Pop() * double.Parse(t.Item1));
+                        }
+                        else if (operators.Peek().Equals("/"))
+                        {
+                            operators.Pop();
+                            values.Push(values.Pop() * double.Parse(t.Item1));
+                        }
+                    }
+                    values.Push(double.Parse(t.Item1));
                 }
-                else if(t.Item2 == Invalid)
+                else if(tokenType.Equals(Var))
+                {
+                   // if(!lookup(Var).Equals())
+                    if (operators.Count != 0)
+                    {
+                        if (operators.Peek().Equals("*"))
+                        {
+                            operators.Pop();
+                            values.Push(values.Pop() * lookup(t.Item1));
+                        }
+                        else if (operators.Peek().Equals("/"))
+                        {
+                            operators.Pop();
+                            values.Push(values.Pop() * lookup(t.Item1));
+                        }
+                    }
+                    values.Push(lookup(t.Item1));
+                }
+                else if (tokenType.Equals(Oper))
+                {
+                    if(token.Equals("*") || token.Equals("/"))
+                    {
+                        operators.Push(token);
+                    }
+                    else
+                    {
+                        if (operators.Count != 0)
+                        {
+                            if (operators.Peek().Equals("+"))
+                            {
+                                operators.Pop();
+                                values.Push(values.Pop() + values.Pop());
+                            }
+                            else if (operators.Peek().Equals("-"))
+                            {
+                                operators.Pop();
+                                values.Push(values.Pop() - values.Pop());
+                            }
+                        }
+                        operators.Push(token);
+                    }
+                }
+                else if(tokenType.Equals(LParen))
+                {
+                    operators.Push(token);
+                }
+                else if (tokenType.Equals(RParen))
+                {
+                    if(operators.Count != 0)
+                    {
+                        throw new FormulaEvaluationException("No opening paren");
+                    }
+                        if (operators.Peek().Equals("+"))
+                    {
+                        operators.Pop();
+                        values.Push(values.Pop() + values.Pop());
+                    }
+                    else
+                    {
+                        operators.Pop();
+                        values.Push(values.Pop() - values.Pop());
+                    }
+
+                    operators.Pop();
+
+                    if (operators.Peek().Equals("*"))
+                    {
+                        operators.Pop();
+                        values.Push(values.Pop() * values.Pop());
+                    }
+                    else if (operators.Equals("/"))
+                    {
+                        operators.Pop();
+                        values.Push(values.Pop() * values.Pop());
+                    }
+                }
+                else if (t.Item2 == Invalid)
                 {
                     throw new FormulaEvaluationException("Formula contains invalid sytax, please try again");
                 }
-                else if(t.Item2 == LParen || t.Item2 == RParen)
+            }
+
+            if(operators.Count != 0)
+            {
+                if (operators.Peek().Equals("+"))
                 {
-                    
+                    operators.Pop();
+                    values.Push(values.Pop() + values.Pop());
+                }
+                else if (operators.Peek().Equals("-"))
+                {
+                    operators.Pop();
+                    values.Push(values.Pop() - values.Pop());
                 }
             }
 
-            return 0;
+
+            return values.Pop();
         }
 
+        /// <summary>
+        /// Used to simplify peek command for operatiors stack. This is an ultra specific method
+        /// </summary>
+        /// <param name="stack"></param>
+        /// <param name="oper"></param>
+        /// <returns></returns>
+        public static bool OpPeek(this Stack<string> stack, string oper = "default")
+        {
+            bool returnVal = false;
+
+            if(stack.Count != 0)
+            {
+                if (stack.Peek().Equals(oper))
+                {
+                    returnVal = true;
+                }
+               
+            }
+
+            return returnVal;
+        }
         /// <summary>
         /// Given a formula, enumerates the tokens that compose it.  Each token is described by a
         /// Tuple containing the token's text and TokenType.  There are no empty tokens, and no
@@ -263,4 +383,5 @@ namespace Formulas
         {
         }
     }
+
 }
