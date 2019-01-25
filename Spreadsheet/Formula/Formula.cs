@@ -41,31 +41,87 @@ namespace Formulas
         public Formula(String formula)
         {
             this.formula = formula;
-            TokenType previous = LParen;
+            TokenType? previous = null;
+            Stack lParen = new Stack();
+            Stack rParen = new Stack();
 
-            foreach (Tuple<string, TokenType> t in GetTokens(formula))
+            IEnumerable<Tuple<string, TokenType>> tokenEnum = GetTokens(formula);
+
+            //check and make sure there is at least one token (req 2)
+            if (tokenEnum == null || !tokenEnum.GetEnumerator().MoveNext()) 
             {
-                if (t == null)
+                throw new FormulaFormatException("Empty formula");
+            }
+
+            foreach (Tuple<string, TokenType> t in tokenEnum)
+            {
+
+                //add Parens to stack (req 3)
+                if (t.Item2.Equals(LParen))
                 {
-                    throw new FormulaFormatException("No formula");
+                    lParen.Push(t.Item1);
                 }
-                if (t.Item2.Equals(Oper) && previous.Equals(Oper))
+                else if (t.Item2.Equals(RParen))
+                {
+                    rParen.Push(t.Item1);
+                }
+                //check parens 
+                if (rParen.Count > lParen.Count)
+                {
+                    throw new FormulaFormatException("Formula contains too many closing parenthesis");
+                }
+
+
+                //check for first token is open paren (req 5)
+                if (t.Item2.Equals(RParen) && previous.Equals(null)) 
+                {
+                    throw new FormulaFormatException("Formula starts with closing paren, please revise");
+                }
+
+                //check for first token is open Oper (req 5)
+                if (t.Item2.Equals(Oper) && previous.Equals(null)) 
+                {
+                    throw new FormulaFormatException("Formula starts with operator, please revise");
+                }
+
+                //check back to back operators or  immediate open/close parens (req 7)
+                if ((t.Item2.Equals(Oper) && (previous.Equals(Oper) || previous.Equals(LParen)))  || (t.Item2.Equals(RParen) && (previous.Equals(Oper) || previous.Equals(LParen)))) 
                 {
                     throw new FormulaFormatException("Forumula contains back to back operators, please revise");
                 }
-                if (t.Item2.Equals(Number) && previous.Equals(Number))
+
+                //token that immediately follows an opening parenthesis or an operator must be either a number, a variable, or an opening parenthesis (req 8)
+                if ((previous.Equals(Number) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen)))  || ( previous.Equals(Var) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen))) || (previous.Equals(RParen) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen))))
                 {
-                    throw new FormulaFormatException("Forumula contains back to back doubles, please revise");
+                    throw new FormulaFormatException("Forumula contains back to back vars, numbers, or , please revise");
                 }
-                if (t.Item2 == Invalid || t == null)
+
+                // no invalid tokens (req 1)
+                if (t.Item2.Equals(Invalid)) 
                 {
-                    throw new FormulaFormatException("Forumula contains invalid syntax, please try again");
+                    throw new FormulaFormatException("Forumula contains invalid syntax, please revise");
                 }
+
                 previous = t.Item2;
+
+
             }
 
+            //check ending of formula for completion (req 6)
+            if (previous.Equals(Oper) || previous.Equals(LParen)) 
+            {
+                throw new FormulaFormatException("Forumula ends with invalid syntax, please revise");
+            }
+
+            //check same number of open/close parens (req 4)
+            if (rParen.Count != lParen.Count)
+            {
+                throw new FormulaFormatException("Formula contains mismatched parenthesis");
+            }
 
         }
+
+
         /// <summary>
         /// Evaluates this Formula, using the Lookup delegate to determine the values of variables.  (The
         /// delegate takes a variable name as a parameter and returns its value (if it has one) or throws
@@ -164,7 +220,7 @@ namespace Formulas
                         operators.Pop();
                         values.Push(values.Pop() + values.Pop());
                     }
-                    else if(OpPeek(operators, "-"))
+                    else if (OpPeek(operators, "-"))
                     {
                         operators.Pop();
                         values.Push(values.Pop() - values.Pop());
