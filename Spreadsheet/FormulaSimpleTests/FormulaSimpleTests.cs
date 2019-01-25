@@ -63,6 +63,16 @@ namespace FormulaTestCases
         /// </summary>
         [TestMethod]
         [ExpectedException(typeof(FormulaFormatException))]
+        public void Construct17()
+        {
+            Formula f = new Formula("~");
+        }
+
+        /// <summary>
+        /// Another syntax error.
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
         public void Construct5()
         {
             Formula f = new Formula("  ");

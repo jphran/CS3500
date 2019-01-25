@@ -1,5 +1,7 @@
 ﻿// Skeleton written by Joe Zachary for CS 3500, January 2019
-// Edited by Justin Francis, Jan 2019 v0.1
+// Edited by Justin Francis, Jan 2019 v1.0+ ready for release (grade)
+
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -40,10 +42,10 @@ namespace Formulas
         /// </summary>
         public Formula(String formula)
         {
-            this.formula = formula;
-            TokenType? previous = null;
-            Stack lParen = new Stack();
-            Stack rParen = new Stack();
+            this.formula = formula; //idk how else to pass this to Evaluate()
+            TokenType? previous = null; //make TokenType an nullable type and set to null to check first token's TokenType
+            Stack lParen = new Stack(); //opening paren stack 
+            Stack rParen = new Stack(); //closing paren stack
 
             IEnumerable<Tuple<string, TokenType>> tokenEnum = GetTokens(formula);
 
@@ -53,10 +55,13 @@ namespace Formulas
                 throw new FormulaFormatException("Empty formula");
             }
 
+            //consume enum and check inputted formula for syntatical correctness as defined in PS2 and the summary abovve
             foreach (Tuple<string, TokenType> t in tokenEnum)
             {
 
-                //add Parens to stack (req 3)
+                //When reading tokens from left to right, at no point should the
+                //number of closing parentheses seen so far be greater than the number
+                //of opening parentheses seen so far (req 3)
                 if (t.Item2.Equals(LParen))
                 {
                     lParen.Push(t.Item1);
@@ -72,19 +77,19 @@ namespace Formulas
                 }
 
 
-                //check for first token is open paren (req 5)
+                //check if first token is open paren (req 5)
                 if (t.Item2.Equals(RParen) && previous.Equals(null))
                 {
                     throw new FormulaFormatException("Formula starts with closing paren, please revise");
                 }
 
-                //check for first token is open Oper (req 5)
+                //check if first token is Oper (req 5)
                 if (t.Item2.Equals(Oper) && previous.Equals(null))
                 {
                     throw new FormulaFormatException("Formula starts with operator, please revise");
                 }
 
-                //check back to back operators or  immediate open/close parens (req 7)
+                //Any token that immediately follows an opening parenthesis or an operator must be either a number, a variable, or an opening parenthesis (req 7)
                 if ((t.Item2.Equals(Oper) && (previous.Equals(Oper) || previous.Equals(LParen))) || (t.Item2.Equals(RParen) && (previous.Equals(Oper) || previous.Equals(LParen))))
                 {
                     throw new FormulaFormatException("Forumula contains back to back operators, please revise");
@@ -103,8 +108,6 @@ namespace Formulas
                 }
 
                 previous = t.Item2;
-
-
             }
 
             //check ending of formula for completion (req 6)
@@ -235,71 +238,74 @@ namespace Formulas
                     {
                         throw new FormulaFormatException("No opening paren");
                     }
+
                     if (OpPeek(operators, "+")) //check oper stack for +
                     {
                         operators.Pop(); //remove + from oper stack
                         values.Push(values.Pop() + values.Pop()); //evaluate expression and push to val stack
                     }
-                    else if (OpPeek(operators, "-"))
+                    else if (OpPeek(operators, "-")) //check top of oper for -
                     {
-                        operators.Pop();
-                        double secondOperand = values.Pop();
-                        double firstOperand = values.Pop();
-                        values.Push(firstOperand - secondOperand);
+                        operators.Pop(); //remove top oper
+                        double secondOperand = values.Pop(); //pull top num off val (both of these are necessary for correct evaluation with respect to original formula)
+                        double firstOperand = values.Pop(); //pull second num off val
+                        values.Push(firstOperand - secondOperand); //evaluate and push to val stack
                     }
 
-                    operators.Pop();
+                    operators.Pop(); //no matter what remove ( from oper stack
 
-                    if (OpPeek(operators, "*")) //operators.Peek().Equals("*"))
+                    if (OpPeek(operators, "*")) //check top of opers for *
                     {
-                        operators.Pop();
-                        values.Push(values.Pop() * values.Pop());
+                        operators.Pop(); //remove * from stack
+                        values.Push(values.Pop() * values.Pop()); //evaluate and push to val stack
                     }
-                    else if (OpPeek(operators, "/")) //operators.Equals("/"))
+                    else if (OpPeek(operators, "/")) //check top of oper for /
                     {
-                        if(values.Peek() == 0.0)
+                        if(values.Peek() == 0.0) //check against division by zero
                         {
                             throw new FormulaEvaluationException("Cannot divide by zero, please revise");
                         }
-                        operators.Pop();
-                        values.Push(values.Pop() / values.Pop());
+                        operators.Pop(); //otherwise remove / from op stack
+                        values.Push(values.Pop() / values.Pop()); //evaluate division expression and push to stack
                     }
                 }
+
+                //handles TokenType [Invalid] as defined in PS2
                 else if (tokenType.Equals(Invalid))
                 {
                     throw new FormulaEvaluationException("Formula contains invalid sytax, please try again");
                 }
             }
 
+            //finish evaluating rest expression if there is still objects in oper stack
             if (operators.Count != 0)
             {
-                if (operators.Peek().Equals("+"))
+                if (operators.Peek().Equals("+")) //check top of oper stack for +
                 {
-                    operators.Pop();
-                    values.Push(values.Pop() + values.Pop());
+                    operators.Pop(); //remove +
+                    values.Push(values.Pop() + values.Pop()); //evaluate addition and push to val stack
                 }
-                else if (operators.Peek().Equals("-"))
+                else if (operators.Peek().Equals("-")) //check top of oper stack for -
                 {
-                    operators.Pop();
+                    operators.Pop(); //same proceedure as above to get correct evaluation for subtraction expression
                     double secondOperand = values.Pop();
                     double firstOperand = values.Pop();
                     values.Push(firstOperand - secondOperand);
                 }
             }
 
-
-            return values.Pop();
+            return values.Pop(); //return only value left on val stack (if there is more than 1, something went terribly wrong)
         }
 
         /// <summary>
-        /// Used to simplify peek command for operatiors stack. This is an ultra specific method
+        /// Used to simplify peek command for operatiors stack. This is an ultra specific method for a Stack<double></double>
         /// </summary>
         /// <param name="stack"></param>
         /// <param name="oper"></param>
         /// <returns></returns>
         private static bool OpPeek(Stack<string> stack, string oper = "default")
         {
-            bool returnVal = false;
+            bool returnVal = false; //pretty straight forward, if serious questions... please seek help
 
             if (stack.Count != 0)
             {
@@ -312,6 +318,13 @@ namespace Formulas
 
             return returnVal;
         }
+
+
+
+        //Justin did not edit below this line
+//*******************************************************************************************
+
+
 
         /// <summary>
         /// Given a formula, enumerates the tokens that compose it.  Each token is described by a
@@ -393,27 +406,6 @@ namespace Formulas
         }
     }
 
-    ///// <summary>
-    ///// Used to simplify peek command for operatiors stack. This is an ultra specific method
-    ///// </summary>
-    ///// <param name="stack"></param>
-    ///// <param name="oper"></param>
-    ///// <returns></returns>
-    //public static bool OpPeek(this Stack<string> stack, string oper = "default")
-    //{
-    //    bool returnVal = false;
-
-    //    if (stack.Count != 0)
-    //    {
-    //        if (stack.Peek().Equals(oper))
-    //        {
-    //            returnVal = true;
-    //        }
-
-    //    }
-
-    //    return returnVal;
-    //}
 
     /// <summary>
     /// Identifies the type of a token.
