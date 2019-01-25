@@ -312,18 +312,42 @@ namespace FormulaTestCases
             Assert.AreEqual(f.Evaluate(v => 0), 5.0, 1e-6);
         }
 
-        //"2.5e9 + x5 / 17"
-        /////     "(5 * 2) + 8"
-        /////     "x*y-2+35/9"
+
 
         /// <summary>
         /// test valid formulas
         /// </summary>
         [TestMethod]
-        public void Evaluate11()
+        public void Evaluate14()
         {
-            Formula f = new Formula("10-5");
-            Assert.AreEqual(f.Evaluate(v => 0), 5.0, 1e-6);
+            Formula f = new Formula("(2.5e9 + x5) / 17");
+            Assert.AreEqual(f.Evaluate(v => 0), 147058823.529412, 1e-6);
+
+            Formula g = new Formula("(5 * 2) + 8");
+            Assert.AreEqual(g.Evaluate(v => 0), 18.0, 1e-6);
+
+            Formula h = new Formula("x*y-2+35/9");
+            Assert.AreEqual(h.Evaluate(Lookup4), 25.88888888888, 1e-6);
+        }
+
+
+
+        // "_"
+        /////     "-5.3"
+        /////     "2 5 + 3"
+
+        /// <summary>
+        /// test invalid formulas
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void Construct16()
+        {
+            Formula f = new Formula("_");
+
+            Formula g = new Formula("-5.3");
+
+            Formula h = new Formula("2 5 + 3");
         }
 
         /// <summary>

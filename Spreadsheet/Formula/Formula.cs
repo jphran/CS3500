@@ -136,104 +136,109 @@ namespace Formulas
             Stack<double> values = new Stack<double>();
             Stack<string> operators = new Stack<string>();
 
+            //consume enum and evaluate as appropriate
             foreach (Tuple<string, TokenType> t in GetTokens(formula))
             {
-                //IEnumerator operatorEnum = operators.GetEnumerator();
+                TokenType tokenType = t.Item2; //short hand
+                string token = t.Item1; //short hand
 
-                TokenType tokenType = t.Item2;
-                string token = t.Item1;
-
+                //handles TokenType [Number] as defined in PS2
                 if (tokenType.Equals(Number))
                 {
-                    if (OpPeek(operators, "*"))
+                    if (OpPeek(operators, "*")) //checks operators stack for multiplication oper
                     {
-                        operators.Pop();
-                        values.Push(values.Pop() * double.Parse(token));
+                        operators.Pop(); //pull op off stack
+                        values.Push(values.Pop() * double.Parse(token)); //evaluate expression and push to values stack
                     }
-                    else if (OpPeek(operators, "/"))
+                    else if (OpPeek(operators, "/")) //check operator stack for division oper
                     {
-                        if(double.Parse(token) == 0.0)
+                        if(double.Parse(token) == 0.0) //check for divide by 0
                         {
                             throw new FormulaEvaluationException("Cannot divide by zero, please revise");
                         }
-                        operators.Pop();
-                        values.Push(values.Pop() / double.Parse(token));
+                        operators.Pop(); //remove oper from stack
+                        values.Push(values.Pop() / double.Parse(token)); //evaluate and push to val stack
                     }
-                    else
+                    else //otherwise push num to val stack
                     {
                         values.Push(double.Parse(token));
                     }
                 }
+
+                //handles TokenType [Var] as defined in PS2
                 else if (tokenType.Equals(Var))
                 {
                     try
                     {
-
-                        if (OpPeek(operators, "*"))
+                        if (OpPeek(operators, "*")) //check top of oper stack for multi oper
                         {
-                            operators.Pop();
-                            values.Push(values.Pop() * lookup(token));
+                            operators.Pop(); //remove oper from stack
+                            values.Push(values.Pop() * lookup(token)); //evaluate experssion and push to val stack
                         }
-                        else if (OpPeek(operators, "/"))
+                        else if (OpPeek(operators, "/")) //check top of oper stack for divide oper
                         {
-                            if(values.Peek() == 0.0 || lookup(token) == 0.0)
+                            if(values.Peek() == 0.0 || lookup(token) == 0.0) //check against division by zero
                             {
                                 throw new FormulaEvaluationException("Cannot divide by zero, please revise");
                             }
-                            operators.Pop();
-                            values.Push(values.Pop() / lookup(token));
+                            operators.Pop(); //remove oper from top of oper stack
+                            values.Push(values.Pop() / lookup(token)); //evaluate expression and push to val stack
                         }
-                        else
+                        else //push variable to val stack
                         {
                             values.Push(lookup(token));
                         }
-                        
                     }
-                    catch
+                    catch //catch undefinedVariableException
                     {
                         throw new FormulaEvaluationException("Variables are non-double values");
                     }
                 }
+
+                //handles TokenType [Oper] as defined in PS2
                 else if (tokenType.Equals(Oper))
                 {
-                    if (token.Equals("*") || token.Equals("/"))
+                    if (token.Equals("*") || token.Equals("/")) //check token string for mult or divide oper
                     {
-                        operators.Push(token);
+                        operators.Push(token); //push oper to op stack
                     }
-                    else
+                    else //for + and - opers
                     {
 
-                        if (OpPeek(operators, "+")) //operators.Peek().Equals("+"))
+                        if (OpPeek(operators, "+")) //check op stack for +
                         {
-                            operators.Pop();
-                            values.Push(values.Pop() + values.Pop());
+                            operators.Pop(); //remove top oper
+                            values.Push(values.Pop() + values.Pop()); //eval and push to val stack
                         }
-                        else if (OpPeek(operators, "-")) //operators.Peek().Equals("-"))
+                        else if (OpPeek(operators, "-")) //check op stack for -
                         {
-                            operators.Pop();
-                            double secondOperand = values.Pop();
-                            double firstOperand = values.Pop();
-                            values.Push(firstOperand - secondOperand);
+                            operators.Pop(); //remove top oper
+                            double secondOperand = values.Pop(); //pull top num off val (both of these are necessary for correct evaluation with respect to original formula)
+                            double firstOperand = values.Pop(); //pull second num off val
+                            values.Push(firstOperand - secondOperand); //evaluate and push to val stack
                         }
-
-
-                        operators.Push(token);
+                        operators.Push(token); //no matter what push the +/- oper to the oper stack
                     }
                 }
+
+                //handles TokenType [LParen] as defined in PS2
                 else if (tokenType.Equals(LParen))
                 {
                     operators.Push(token);
                 }
+
+                //handles TokenType [RParen} as defined in PS2
                 else if (tokenType.Equals(RParen))
                 {
+                    //redundency of (req 3)
                     if (operators.Count == 0)
                     {
                         throw new FormulaFormatException("No opening paren");
                     }
-                    if (OpPeek(operators, "+")) //operators.Peek().Equals("+"))
+                    if (OpPeek(operators, "+")) //check oper stack for +
                     {
-                        operators.Pop();
-                        values.Push(values.Pop() + values.Pop());
+                        operators.Pop(); //remove + from oper stack
+                        values.Push(values.Pop() + values.Pop()); //evaluate expression and push to val stack
                     }
                     else if (OpPeek(operators, "-"))
                     {
