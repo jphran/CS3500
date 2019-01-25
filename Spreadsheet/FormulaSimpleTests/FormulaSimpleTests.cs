@@ -230,6 +230,103 @@ namespace FormulaTestCases
         }
 
         /// <summary>
+        /// This uses one of each kind of token.
+        /// </summary>
+        [TestMethod]
+        public void Evaluate6()
+        {
+            Formula f = new Formula("(x + y) * (z / x) * 5.0");
+            Assert.AreEqual(f.Evaluate(Lookup4), 100.0, 1e-6);
+        }
+
+        /// <summary>
+        /// Divide by zero
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(FormulaEvaluationException))]
+        public void Evaluate7()
+        {
+            Formula f = new Formula("(x + y) * (z /( 0.0* 17.5)) * 1.0");
+            f.Evaluate(Lookup4);
+        }
+
+        /// <summary>
+        /// Divide by zero
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(FormulaEvaluationException))]
+        public void Evaluate8()
+        {
+            Formula f = new Formula("10/q");
+            f.Evaluate(v => 0.0);
+        }
+
+
+        /// <summary>
+        /// negative var val
+        /// </summary>
+        [TestMethod]
+        public void Evaluate9()
+        {
+            Formula f = new Formula("20 - x");
+            Assert.AreEqual(f.Evaluate(v => -25.0), 45.0, 1e-6);
+        }
+
+        /// <summary>
+        /// negative var val, pos return val
+        /// </summary>
+        [TestMethod]
+        public void Evaluate12()
+        {
+            Formula f = new Formula("15+ x");
+            Assert.AreEqual(f.Evaluate(v => -25.0), -10.0, 1e-6);
+        }
+
+        /// <summary>
+        /// negative var val, neg return val
+        /// </summary>
+        [TestMethod]
+        public void Evaluate13()
+        {
+            Formula f = new Formula("( 10-45)- x");
+            Assert.AreEqual(f.Evaluate(v => -25.0), -10.0, 1e-6);
+        }
+
+        /// <summary>
+        /// negative return val
+        /// </summary>
+        [TestMethod]
+        public void Evaluate10()
+        {
+            Formula f = new Formula("1.0 - 51");
+            Assert.AreEqual(f.Evaluate(v => 0), -50.0, 1e-6);
+        }
+
+        /// <summary>
+        /// subtraction
+        /// </summary>
+        [TestMethod]
+        public void Evaluate11()
+        {
+            Formula f = new Formula("10-5");
+            Assert.AreEqual(f.Evaluate(v => 0), 5.0, 1e-6);
+        }
+
+        //"2.5e9 + x5 / 17"
+        /////     "(5 * 2) + 8"
+        /////     "x*y-2+35/9"
+
+        /// <summary>
+        /// test valid formulas
+        /// </summary>
+        [TestMethod]
+        public void Evaluate11()
+        {
+            Formula f = new Formula("10-5");
+            Assert.AreEqual(f.Evaluate(v => 0), 5.0, 1e-6);
+        }
+
+        /// <summary>
         /// A Lookup method that maps x to 4.0, y to 6.0, and z to 8.0.
         /// All other variables result in an UndefinedVariableException.
         /// </summary>

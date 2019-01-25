@@ -48,7 +48,7 @@ namespace Formulas
             IEnumerable<Tuple<string, TokenType>> tokenEnum = GetTokens(formula);
 
             //check and make sure there is at least one token (req 2)
-            if (tokenEnum == null || !tokenEnum.GetEnumerator().MoveNext()) 
+            if (tokenEnum == null || !tokenEnum.GetEnumerator().MoveNext())
             {
                 throw new FormulaFormatException("Empty formula");
             }
@@ -73,31 +73,31 @@ namespace Formulas
 
 
                 //check for first token is open paren (req 5)
-                if (t.Item2.Equals(RParen) && previous.Equals(null)) 
+                if (t.Item2.Equals(RParen) && previous.Equals(null))
                 {
                     throw new FormulaFormatException("Formula starts with closing paren, please revise");
                 }
 
                 //check for first token is open Oper (req 5)
-                if (t.Item2.Equals(Oper) && previous.Equals(null)) 
+                if (t.Item2.Equals(Oper) && previous.Equals(null))
                 {
                     throw new FormulaFormatException("Formula starts with operator, please revise");
                 }
 
                 //check back to back operators or  immediate open/close parens (req 7)
-                if ((t.Item2.Equals(Oper) && (previous.Equals(Oper) || previous.Equals(LParen)))  || (t.Item2.Equals(RParen) && (previous.Equals(Oper) || previous.Equals(LParen)))) 
+                if ((t.Item2.Equals(Oper) && (previous.Equals(Oper) || previous.Equals(LParen))) || (t.Item2.Equals(RParen) && (previous.Equals(Oper) || previous.Equals(LParen))))
                 {
                     throw new FormulaFormatException("Forumula contains back to back operators, please revise");
                 }
 
                 //token that immediately follows an opening parenthesis or an operator must be either a number, a variable, or an opening parenthesis (req 8)
-                if ((previous.Equals(Number) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen)))  || ( previous.Equals(Var) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen))) || (previous.Equals(RParen) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen))))
+                if ((previous.Equals(Number) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen))) || (previous.Equals(Var) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen))) || (previous.Equals(RParen) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen))))
                 {
                     throw new FormulaFormatException("Forumula contains back to back vars, numbers, or , please revise");
                 }
 
                 // no invalid tokens (req 1)
-                if (t.Item2.Equals(Invalid)) 
+                if (t.Item2.Equals(Invalid))
                 {
                     throw new FormulaFormatException("Forumula contains invalid syntax, please revise");
                 }
@@ -108,7 +108,7 @@ namespace Formulas
             }
 
             //check ending of formula for completion (req 6)
-            if (previous.Equals(Oper) || previous.Equals(LParen)) 
+            if (previous.Equals(Oper) || previous.Equals(LParen))
             {
                 throw new FormulaFormatException("Forumula ends with invalid syntax, please revise");
             }
@@ -138,7 +138,7 @@ namespace Formulas
 
             foreach (Tuple<string, TokenType> t in GetTokens(formula))
             {
-                IEnumerator operatorEnum = operators.GetEnumerator();
+                //IEnumerator operatorEnum = operators.GetEnumerator();
 
                 TokenType tokenType = t.Item2;
                 string token = t.Item1;
@@ -148,33 +148,46 @@ namespace Formulas
                     if (OpPeek(operators, "*"))
                     {
                         operators.Pop();
-                        values.Push(values.Pop() * double.Parse(t.Item1));
+                        values.Push(values.Pop() * double.Parse(token));
                     }
                     else if (OpPeek(operators, "/"))
                     {
+                        if(double.Parse(token) == 0.0)
+                        {
+                            throw new FormulaEvaluationException("Cannot divide by zero, please revise");
+                        }
                         operators.Pop();
-                        values.Push(values.Pop() * double.Parse(t.Item1));
+                        values.Push(values.Pop() / double.Parse(token));
                     }
-
-                    values.Push(double.Parse(t.Item1));
+                    else
+                    {
+                        values.Push(double.Parse(token));
+                    }
                 }
                 else if (tokenType.Equals(Var))
                 {
                     try
                     {
 
-                        if (OpPeek(operators, "*")) //operators.Peek().Equals("*"))
+                        if (OpPeek(operators, "*"))
                         {
                             operators.Pop();
-                            values.Push(values.Pop() * lookup(t.Item1));
+                            values.Push(values.Pop() * lookup(token));
                         }
-                        else if (OpPeek(operators, "/")) //operators.Peek().Equals("/"))
+                        else if (OpPeek(operators, "/"))
                         {
+                            if(values.Peek() == 0.0 || lookup(token) == 0.0)
+                            {
+                                throw new FormulaEvaluationException("Cannot divide by zero, please revise");
+                            }
                             operators.Pop();
-                            values.Push(values.Pop() * lookup(t.Item1));
+                            values.Push(values.Pop() / lookup(token));
                         }
-
-                        values.Push(lookup(t.Item1));
+                        else
+                        {
+                            values.Push(lookup(token));
+                        }
+                        
                     }
                     catch
                     {
@@ -198,7 +211,9 @@ namespace Formulas
                         else if (OpPeek(operators, "-")) //operators.Peek().Equals("-"))
                         {
                             operators.Pop();
-                            values.Push(values.Pop() - values.Pop());
+                            double secondOperand = values.Pop();
+                            double firstOperand = values.Pop();
+                            values.Push(firstOperand - secondOperand);
                         }
 
 
@@ -223,7 +238,9 @@ namespace Formulas
                     else if (OpPeek(operators, "-"))
                     {
                         operators.Pop();
-                        values.Push(values.Pop() - values.Pop());
+                        double secondOperand = values.Pop();
+                        double firstOperand = values.Pop();
+                        values.Push(firstOperand - secondOperand);
                     }
 
                     operators.Pop();
@@ -235,11 +252,15 @@ namespace Formulas
                     }
                     else if (OpPeek(operators, "/")) //operators.Equals("/"))
                     {
+                        if(values.Peek() == 0.0)
+                        {
+                            throw new FormulaEvaluationException("Cannot divide by zero, please revise");
+                        }
                         operators.Pop();
-                        values.Push(values.Pop() * values.Pop());
+                        values.Push(values.Pop() / values.Pop());
                     }
                 }
-                else if (t.Item2 == Invalid)
+                else if (tokenType.Equals(Invalid))
                 {
                     throw new FormulaEvaluationException("Formula contains invalid sytax, please try again");
                 }
@@ -255,7 +276,9 @@ namespace Formulas
                 else if (operators.Peek().Equals("-"))
                 {
                     operators.Pop();
-                    values.Push(values.Pop() - values.Pop());
+                    double secondOperand = values.Pop();
+                    double firstOperand = values.Pop();
+                    values.Push(firstOperand - secondOperand);
                 }
             }
 
