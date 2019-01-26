@@ -1,5 +1,6 @@
 ﻿// Skeleton implementation written by Joe Zachary for CS 3500, January 2018.
-
+// Edited by Justin Francis, jan 2019
+//https://stackoverflow.com/questions/14133115/implementation-of-an-adjacency-list-graph-representation
 using System;
 using System.Collections.Generic;
 
