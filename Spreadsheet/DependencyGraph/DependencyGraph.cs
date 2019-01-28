@@ -50,17 +50,16 @@ namespace Dependencies
     /// </summary>
     public class DependencyGraph
     {
-        //dependants stored in 1st element [0] and dependees stored in [1
-        private Dictionary<string, Dictionary<string, string>[]> adjList;
+        //item1 = dependee list, item2 = dependent list
+        private Dictionary<string, Tuple<Dictionary<string, string>, Dictionary<string, string>>> adjList;
         private int size;
-
 
         /// <summary>
         /// Creates a DependencyGraph containing no dependencies.
         /// </summary>
         public DependencyGraph()
         {
-            adjList = new Dictionary<string, Dictionary<string, string>[]>();
+            adjList = new Dictionary<string, Tuple<Dictionary<string, string>, Dictionary<string, string>>>();
             size = 0;
         }
 
@@ -77,9 +76,9 @@ namespace Dependencies
         /// </summary>
         public bool HasDependents(string s)
         {
-            if (adjList.TryGetValue(s, out Dictionary<string, string>[] dependencies))
+            if(adjList.TryGetValue(s, out Tuple<Dictionary<string,string>, Dictionary<string,string>> dependencies))
             {
-                return dependencies[0].GetEnumerator().MoveNext();
+               return dependencies.Item2.GetEnumerator().MoveNext();
             }
 
             return false;
@@ -90,9 +89,9 @@ namespace Dependencies
         /// </summary>
         public bool HasDependees(string s)
         {
-            if (adjList.TryGetValue(s, out Dictionary<string, string>[] dependencies))
+            if (adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
             {
-                return dependencies[1].GetEnumerator().MoveNext();
+                return dependencies.Item1.GetEnumerator().MoveNext();
             }
 
             return false;
@@ -103,9 +102,9 @@ namespace Dependencies
         /// </summary>
         public IEnumerable<string> GetDependents(string s)
         {
-            if(adjList.TryGetValue(s, out Dictionary<string, string>[] dependencies))
+            if (adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
             {
-                return dependencies[0].Values;
+                return dependencies.Item2.Values;
             }
 
             return null;
@@ -116,9 +115,9 @@ namespace Dependencies
         /// </summary>
         public IEnumerable<string> GetDependees(string s)
         {
-            if (adjList.TryGetValue(s, out Dictionary<string, string>[] dependencies))
+            if (adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
             {
-                return dependencies[1].Values;
+                return dependencies.Item1.Values;
             }
 
             return null;
@@ -130,18 +129,55 @@ namespace Dependencies
         /// Requires s != null and t != null.
         /// </summary>
         public void AddDependency(string s, string t)
-        {
-            if (!adjList.TryGetValue(t, out Dictionary<string, string>[] dependencies))
+        { //s = dependee, t = dependent
+            bool dependentExist; //space saver
+            bool dependeeExist;
+
+            //check if the dependent does not exists in the top level container
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  BIG PROBLEM, DOES NOT ENTER TEH ELSE IF LOOP BELOW, DOES NOT ADD DEPENDEE TO EXISTENT TOP LEVEL DEPENDENT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if (dependentExist = adjList.TryGetValue(t, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependentDependencies) == false)
             {
-                Dictionary<string, string>[] newDependencies = new Dictionary<string, string>[] { new Dictionary<string, string>(), new Dictionary<string, string>()};
-                newDependencies[1].Add(s, s);
-                adjList.Add(t, newDependencies);
+                Dictionary<string,string> dependeeDict = new Dictionary<string, string>(); //create new dependee dict for new top level dependent
+                dependeeDict.Add(s, s); //add dependee to bottom level dict
+
+                adjList.Add(t, new Tuple<Dictionary<string, string>, Dictionary<string, string>>(dependeeDict, new Dictionary<string, string>())); //add top level dependent with new dependee dict containing dependency
                 size++;
             }
-            else if (!dependencies[1].ContainsKey(s))
+            //check if the dependent exists in the top level container
+            else if(dependentExist == true)
             {
-                dependencies[1].Add(s, s);
-                size++;
+                //check if desired dependency does not exists in low level container
+                if (!dependentDependencies.Item1.ContainsKey(s))
+                {
+                    dependentDependencies.Item1.Add(s, s); //add depedee dependency
+                    size++;
+                }
+            }
+
+
+            //check if the dependee does not exists in the top level container
+            if (dependeeExist = adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependeeDependencies) == false)
+            {
+                Dictionary<string, string> dependentDict = new Dictionary<string, string>(); //create new dependent dict for new top level dependent
+                dependentDict.Add(t, t); //add dependent to bottom level dict
+
+                adjList.Add(s, new Tuple<Dictionary<string, string>, Dictionary<string, string>>(new Dictionary<string, string>(), dependentDict)); //add top level dependee with new dependent dict containing dependency
+            }
+            //check if the dependee exists in the top level container
+            else if (dependeeExist == true)
+            {
+                //check if desired dependency does not exists in low level container
+                if (!dependeeDependencies.Item2.ContainsKey(t))
+                {
+                    dependeeDependencies.Item2.Add(t, t); //add depedent dependency
+                }
             }
         }
 
@@ -151,14 +187,33 @@ namespace Dependencies
         /// Requires s != null and t != null.
         /// </summary>
         public void RemoveDependency(string s, string t)
-        {
-            if (adjList.TryGetValue(t, out Dictionary<string, string>[] dependencies))
+        {// s = dependee, t = dependent
+            bool sizeChange = false;
+
+            //check if dependent does exist in top level container
+            if(sizeChange = adjList.TryGetValue(t, out Tuple<Dictionary<string,string>, Dictionary<string, string>> dependentDependencies) == true)
             {
-                if (dependencies[1].ContainsKey(s))
+                //check if dependency exist in bottom level container
+                if (dependentDependencies.Item1.ContainsKey(s))
                 {
-                    dependencies[1].Remove(s);
-                    size--;
+                    dependentDependencies.Item1.Remove(s); //remove (s,t) dependency from bot level container
                 }
+            }
+          
+            //check if dependee exists in the top level container
+            if(adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependeeDependencies))
+            {
+                //check if dependency exists in bot level container
+                if (dependeeDependencies.Item2.ContainsKey(t))
+                {
+                    dependeeDependencies.Item2.Remove(t);//remove (s,t) dependency from bot level container
+                }
+            }
+
+            //see if a dependency was removed
+            if (sizeChange)
+            {
+                size--;
             }
         }
 
@@ -168,31 +223,26 @@ namespace Dependencies
         /// Requires s != null and t != null.
         /// </summary>
         public void ReplaceDependents(string s, IEnumerable<string> newDependents)
-        {
-            if (adjList.ContainsKey(s))
-            {
-               if(adjList.TryGetValue(s, out Dictionary<string, string>[] dependencies))
-                {
-                    size = size - dependencies[1].Count;
-                    dependencies[1].Clear();
+        { //s = dependee, t = dependent
 
-                }
-                else
+            //check if dependee exists in the top level container
+            if (adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
+            {
+                //check if there are any dependents associated in bot level container
+                if (dependencies.Item2.GetEnumerator().MoveNext())
                 {
-                    foreach (string st in newDependents)
+                    //remove all dependencies in the form (s,r)
+                    foreach(string r in dependencies.Item2.Values)
                     {
-                        dependencies[1].Add(st, st);
-                        size++;
+                        RemoveDependency(s, r); //this method takes care of exist/nonexist and size update
                     }
                 }
-                
             }
-            else
+
+            //add all new dependents
+            foreach(string t in newDependents)
             {
-                foreach(string st in newDependents)
-                {
-                    this.AddDependency(s, st);
-                }
+                AddDependency(s, t); //this method takes care of a non existant s in top level container, if one exists it adds dependency
             }
         }
 
@@ -202,7 +252,28 @@ namespace Dependencies
         /// Requires s != null and t != null.
         /// </summary>
         public void ReplaceDependees(string t, IEnumerable<string> newDependees)
-        {
+        { //s = dependee, t = dependent
+
+            //check if dependent exists in the top level container
+            if (adjList.TryGetValue(t, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
+            {
+                //check if there is a bot level container for dependees so we don't throw a nullpointer 
+                if (dependencies.Item1.GetEnumerator().MoveNext())
+                {
+                    //remove all dependencies in the form (r,t)
+                    foreach (string r in dependencies.Item1.Values)
+                    {
+                        RemoveDependency(r, t); //this method takes care of exist/nonexist and size update
+                    }
+                }
+            }
+
+            //add all new dependees
+            foreach (string s in newDependees)
+            {
+                AddDependency(s, t); //this method takes care of a non existant s in top level container, if one exists it adds dependency
+            }
+
         }
     }
 }
