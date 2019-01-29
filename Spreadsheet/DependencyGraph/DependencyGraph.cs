@@ -134,15 +134,7 @@ namespace Dependencies
             bool dependeeExist;
 
             //check if the dependent does not exists in the top level container
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  BIG PROBLEM, DOES NOT ENTER TEH ELSE IF LOOP BELOW, DOES NOT ADD DEPENDEE TO EXISTENT TOP LEVEL DEPENDENT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            if (dependentExist = adjList.TryGetValue(t, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependentDependencies) == false)
+            if ((dependentExist = adjList.TryGetValue(t, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependentDependencies)) == false)
             {
                 Dictionary<string,string> dependeeDict = new Dictionary<string, string>(); //create new dependee dict for new top level dependent
                 dependeeDict.Add(s, s); //add dependee to bottom level dict
@@ -163,7 +155,7 @@ namespace Dependencies
 
 
             //check if the dependee does not exists in the top level container
-            if (dependeeExist = adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependeeDependencies) == false)
+            if ((dependeeExist = adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependeeDependencies)) == false)
             {
                 Dictionary<string, string> dependentDict = new Dictionary<string, string>(); //create new dependent dict for new top level dependent
                 dependentDict.Add(t, t); //add dependent to bottom level dict
@@ -191,7 +183,7 @@ namespace Dependencies
             bool sizeChange = false;
 
             //check if dependent does exist in top level container
-            if(sizeChange = adjList.TryGetValue(t, out Tuple<Dictionary<string,string>, Dictionary<string, string>> dependentDependencies) == true)
+            if((sizeChange = adjList.TryGetValue(t, out Tuple<Dictionary<string,string>, Dictionary<string, string>> dependentDependencies)) == true)
             {
                 //check if dependency exist in bottom level container
                 if (dependentDependencies.Item1.ContainsKey(s))
@@ -224,15 +216,21 @@ namespace Dependencies
         /// </summary>
         public void ReplaceDependents(string s, IEnumerable<string> newDependents)
         { //s = dependee, t = dependent
+            List<string> oldDependents = new List<string>();
 
             //check if dependee exists in the top level container
             if (adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
             {
                 //check if there are any dependents associated in bot level container
-                if (dependencies.Item2.GetEnumerator().MoveNext())
+                if (dependencies.Item2.Count != 0)
                 {
-                    //remove all dependencies in the form (s,r)
-                    foreach(string r in dependencies.Item2.Values)
+                    //add all dependencies in the form (s,r) to a reference list bc you cannot enumerate and modify a dict
+                    foreach(string removeKey in dependencies.Item2.Keys)
+                    {
+                        oldDependents.Add(removeKey);
+                    }
+                    //remove each dependency in the form (s,r) from graph 
+                    foreach (string r in oldDependents)
                     {
                         RemoveDependency(s, r); //this method takes care of exist/nonexist and size update
                     }
@@ -253,15 +251,21 @@ namespace Dependencies
         /// </summary>
         public void ReplaceDependees(string t, IEnumerable<string> newDependees)
         { //s = dependee, t = dependent
+            List<string> oldDependees = new List<string>();
 
             //check if dependent exists in the top level container
             if (adjList.TryGetValue(t, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
             {
                 //check if there is a bot level container for dependees so we don't throw a nullpointer 
-                if (dependencies.Item1.GetEnumerator().MoveNext())
+                if (dependencies.Item1.Count != 0)
                 {
+                    //add all dependees to list bc dict cannot be enumerated and modified concurrently
+                    foreach(string removeKey in dependencies.Item1.Keys)
+                    {
+                        oldDependees.Add(removeKey);
+                    }
                     //remove all dependencies in the form (r,t)
-                    foreach (string r in dependencies.Item1.Values)
+                    foreach (string r in oldDependees)
                     {
                         RemoveDependency(r, t); //this method takes care of exist/nonexist and size update
                     }
