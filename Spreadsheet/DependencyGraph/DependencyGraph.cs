@@ -183,10 +183,10 @@ namespace Dependencies
             bool sizeChange = false;
 
             //check if dependent does exist in top level container
-            if((sizeChange = adjList.TryGetValue(t, out Tuple<Dictionary<string,string>, Dictionary<string, string>> dependentDependencies)) == true)
+            if(adjList.TryGetValue(t, out Tuple<Dictionary<string,string>, Dictionary<string, string>> dependentDependencies) == true)
             {
                 //check if dependency exist in bottom level container
-                if (dependentDependencies.Item1.ContainsKey(s))
+                if ((sizeChange = dependentDependencies.Item1.ContainsKey(s)) == true)
                 {
                     dependentDependencies.Item1.Remove(s); //remove (s,t) dependency from bot level container
                 }
