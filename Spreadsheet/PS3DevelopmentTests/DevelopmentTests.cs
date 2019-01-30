@@ -56,6 +56,7 @@ namespace DevelopmentTests
             Assert.AreEqual(t.Size, 1);
             t.RemoveDependency("x", "y");
             t.RemoveDependency("x", "y");
+            Assert.AreEqual(t.Size, 0);
         }
 
         [TestMethod()]
@@ -212,5 +213,9 @@ namespace DevelopmentTests
             Assert.IsTrue(t.HasDependents("b"));
             Assert.IsTrue(t.HasDependees("b"));
         }
+
+        //************************************************************************Justin's Tests *********************************************************************
+
+
     }
 }
