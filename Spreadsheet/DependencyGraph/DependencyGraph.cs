@@ -51,7 +51,7 @@ namespace Dependencies
     public class DependencyGraph
     {
         //dependants stored in 1st element [0] and dependees stored in [1
-        private Dictionary<string, Dictionary<string, string>[]> adjList;
+        private Dictionary<string, Dictionary<string, string>> adjList;
         private int size;
 
 
@@ -60,7 +60,7 @@ namespace Dependencies
         /// </summary>
         public DependencyGraph()
         {
-            adjList = new Dictionary<string, Dictionary<string, string>[]>();
+            adjList = new Dictionary<string, Dictionary<string, string>>();
             size = 0;
         }
 
@@ -77,9 +77,9 @@ namespace Dependencies
         /// </summary>
         public bool HasDependents(string s)
         {
-            if (adjList.TryGetValue(s, out Dictionary<string, string>[] dependencies))
+            if (adjList.TryGetValue(s, out Dictionary<string, string> dependencies))
             {
-                return dependencies[0].GetEnumerator().MoveNext();
+                return dependencies.GetEnumerator().MoveNext();
             }
 
             return false;
@@ -90,9 +90,9 @@ namespace Dependencies
         /// </summary>
         public bool HasDependees(string s)
         {
-            if (adjList.TryGetValue(s, out Dictionary<string, string>[] dependencies))
+            if (adjList.TryGetValue(s, out Dictionary<string, string> dependencies))
             {
-                return dependencies[1].GetEnumerator().MoveNext();
+                return dependencies.GetEnumerator().MoveNext();
             }
 
             return false;
@@ -103,9 +103,9 @@ namespace Dependencies
         /// </summary>
         public IEnumerable<string> GetDependents(string s)
         {
-            if(adjList.TryGetValue(s, out Dictionary<string, string>[] dependencies))
+            if(adjList.TryGetValue(s, out Dictionary<string, string> dependencies))
             {
-                return dependencies[0].Values;
+                return dependencies.Values;
             }
 
             return null;
@@ -116,9 +116,9 @@ namespace Dependencies
         /// </summary>
         public IEnumerable<string> GetDependees(string s)
         {
-            if (adjList.TryGetValue(s, out Dictionary<string, string>[] dependencies))
+            if (adjList.TryGetValue(s, out Dictionary<string, string> dependencies))
             {
-                return dependencies[1].Values;
+                return dependencies.Values;
             }
 
             return null;
@@ -131,16 +131,15 @@ namespace Dependencies
         /// </summary>
         public void AddDependency(string s, string t)
         {
-            if (!adjList.TryGetValue(t, out Dictionary<string, string>[] dependencies))
+            if (!adjList.TryGetValue(t, out Dictionary<string, string> dependencies))
             {
-                Dictionary<string, string>[] newDependencies = new Dictionary<string, string>[] { new Dictionary<string, string>(), new Dictionary<string, string>()};
-                newDependencies[1].Add(s, s);
+                Dictionary<string, string> newDependencies = new Dictionary<string, string>();
                 adjList.Add(t, newDependencies);
                 size++;
             }
-            else if (!dependencies[1].ContainsKey(s))
+            else if (!dependencies.ContainsKey(s))
             {
-                dependencies[1].Add(s, s);
+                dependencies.Add(s, s);
                 size++;
             }
         }
@@ -152,11 +151,11 @@ namespace Dependencies
         /// </summary>
         public void RemoveDependency(string s, string t)
         {
-            if (adjList.TryGetValue(t, out Dictionary<string, string>[] dependencies))
+            if (adjList.TryGetValue(t, out Dictionary<string, string> dependencies))
             {
-                if (dependencies[1].ContainsKey(s))
+                if (dependencies.ContainsKey(s))
                 {
-                    dependencies[1].Remove(s);
+                    dependencies.Remove(s);
                     size--;
                 }
             }
@@ -171,17 +170,17 @@ namespace Dependencies
         {
             if (adjList.ContainsKey(s))
             {
-               if(adjList.TryGetValue(s, out Dictionary<string, string>[] dependencies))
+               if(adjList.TryGetValue(s, out Dictionary<string, string> dependencies))
                 {
-                    size = size - dependencies[1].Count;
-                    dependencies[1].Clear();
+                    size = size - dependencies.Count;
+                    dependencies.Clear();
 
                 }
                 else
                 {
                     foreach (string st in newDependents)
                     {
-                        dependencies[1].Add(st, st);
+                        dependencies.Add(st, st);
                         size++;
                     }
                 }
