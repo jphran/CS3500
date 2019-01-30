@@ -42,10 +42,13 @@ namespace DevelopmentTests
             DependencyGraph t = new DependencyGraph();
             t.AddDependency("x", "y");
             Assert.IsTrue(t.HasDependees("y"));
+            Assert.IsFalse(t.HasDependents("y"));
+            Assert.IsFalse(t.HasDependees("x"));
             Assert.IsTrue(t.HasDependents("x"));
             t.RemoveDependency("x", "y");
             Assert.IsFalse(t.HasDependees("y"));
             Assert.IsFalse(t.HasDependents("x"));
+            Assert.AreEqual(0, t.Size);
         }
 
         [TestMethod()]
@@ -64,8 +67,11 @@ namespace DevelopmentTests
         {
             DependencyGraph t = new DependencyGraph();
             t.AddDependency("a", "b");
+            Assert.AreEqual(1, t.Size);
             t.AddDependency("a", "c");
+            Assert.AreEqual(2, t.Size);
             t.AddDependency("c", "b");
+            Assert.AreEqual(3, t.Size);
             t.AddDependency("b", "d");
             Assert.AreEqual(4, t.Size);
         }
@@ -81,6 +87,9 @@ namespace DevelopmentTests
 
             IEnumerator<string> e = t.GetDependees("a").GetEnumerator();
             Assert.IsFalse(e.MoveNext());
+
+            IEnumerator<string> dt = t.GetDependents("a").GetEnumerator();
+            Assert.IsTrue(dt.MoveNext());
 
             e = t.GetDependees("b").GetEnumerator();
             Assert.IsTrue(e.MoveNext());
@@ -126,6 +135,7 @@ namespace DevelopmentTests
             t.AddDependency("c", "b");
             Assert.IsTrue(t.HasDependents("a"));
             Assert.IsFalse(t.HasDependees("a"));
+            Assert.IsFalse(t.HasDependees("z"));
             Assert.IsTrue(t.HasDependents("b"));
             Assert.IsTrue(t.HasDependees("b"));
         }
@@ -203,11 +213,19 @@ namespace DevelopmentTests
             t.AddDependency("x", "b");
             t.AddDependency("a", "z");
             t.ReplaceDependents("b", new HashSet<string>());
+            Assert.AreEqual(2, t.Size);
             t.AddDependency("y", "b");
             t.ReplaceDependents("a", new HashSet<string>() { "c" });
+            Assert.AreEqual(3, t.Size);
             t.AddDependency("w", "d");
             t.ReplaceDependees("b", new HashSet<string>() { "a", "c" });
+            Assert.AreEqual(4, t.Size);
+            t.AddDependency("z", "d");
+            t.AddDependency("c", "d");
+            t.AddDependency("k", "d");
+            Assert.AreEqual(7, t.Size);
             t.ReplaceDependees("d", new HashSet<string>() { "b" });
+            Assert.AreEqual(4, t.Size);
             Assert.IsTrue(t.HasDependents("a"));
             Assert.IsFalse(t.HasDependees("a"));
             Assert.IsTrue(t.HasDependents("b"));
@@ -216,6 +234,38 @@ namespace DevelopmentTests
 
         //************************************************************************Justin's Tests *********************************************************************
 
+        [TestMethod()]
+    public void JTestReplaceDependents()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.AddDependency("a", "b");
+            t.AddDependency("a", "c");
+            t.AddDependency("a", "d");
+            t.AddDependency("a", "e");
+            t.AddDependency("a", "f");
+            t.AddDependency("a", "g");
+            Assert.AreEqual(6, t.Size);
+            t.ReplaceDependents("a", new HashSet<string>() { "z" });
+            Assert.AreEqual(1, t.Size);
+            t.ReplaceDependents("a", new HashSet<string>() { "b", "c", "d", "e", "f", "g", "h" });
+            Assert.AreEqual(7, t.Size);
 
+        }
+
+        [TestMethod()]
+        public void JTestOverload()
+        {
+            DependencyGraph t = new DependencyGraph();
+            
+            for(int i = 0; i < 100000; i++)
+            {
+                t.AddDependency(i.ToString(), "a");
+                t.AddDependency("z", i.ToString());
+            }
+            Assert.AreEqual(200000, t.Size);
+
+
+
+        }
     }
 }

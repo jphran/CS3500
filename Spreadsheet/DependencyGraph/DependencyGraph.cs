@@ -51,7 +51,7 @@ namespace Dependencies
     public class DependencyGraph
     {
         //item1 = dependee list, item2 = dependent list
-        private Dictionary<string, Tuple<Dictionary<string, string>, Dictionary<string, string>>> adjList;
+        private Dictionary<string, Tuple<HashSet<string>, HashSet<string>>> adjList;
         private int size;
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Dependencies
         /// </summary>
         public DependencyGraph()
         {
-            adjList = new Dictionary<string, Tuple<Dictionary<string, string>, Dictionary<string, string>>>();
+            adjList = new Dictionary<string, Tuple<HashSet<string>, HashSet<string>>>();
             size = 0;
         }
 
@@ -76,7 +76,7 @@ namespace Dependencies
         /// </summary>
         public bool HasDependents(string s)
         {
-            if(adjList.TryGetValue(s, out Tuple<Dictionary<string,string>, Dictionary<string,string>> dependencies))
+            if(adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependencies))
             {
                return dependencies.Item2.GetEnumerator().MoveNext();
             }
@@ -89,7 +89,7 @@ namespace Dependencies
         /// </summary>
         public bool HasDependees(string s)
         {
-            if (adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
+            if (adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependencies))
             {
                 return dependencies.Item1.GetEnumerator().MoveNext();
             }
@@ -102,9 +102,9 @@ namespace Dependencies
         /// </summary>
         public IEnumerable<string> GetDependents(string s)
         {
-            if (adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
+            if (adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependencies))
             {
-                return dependencies.Item2.Values;
+                return dependencies.Item2;
             }
 
             return null;
@@ -115,9 +115,9 @@ namespace Dependencies
         /// </summary>
         public IEnumerable<string> GetDependees(string s)
         {
-            if (adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
+            if (adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependencies))
             {
-                return dependencies.Item1.Values;
+                return dependencies.Item1;
             }
 
             return null;
@@ -134,41 +134,43 @@ namespace Dependencies
             bool dependeeExist;
 
             //check if the dependent does not exists in the top level container
-            if ((dependentExist = adjList.TryGetValue(t, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependentDependencies)) == false)
+            if ((dependentExist = adjList.TryGetValue(t, out Tuple<HashSet<string>, HashSet<string>> dependentDependencies)) == false)
             {
-                Dictionary<string,string> dependeeDict = new Dictionary<string, string>(); //create new dependee dict for new top level dependent
-                dependeeDict.Add(s, s); //add dependee to bottom level dict
+                HashSet<string> dependeeHash = new HashSet<string>
+                {
+                    s //add dependee to bottom level dict
+                }; //create new dependee dict for new top level dependent
 
-                adjList.Add(t, new Tuple<Dictionary<string, string>, Dictionary<string, string>>(dependeeDict, new Dictionary<string, string>())); //add top level dependent with new dependee dict containing dependency
+                adjList.Add(t, new Tuple<HashSet<string>, HashSet<string>>(dependeeHash, new HashSet<string>())); //add top level dependent with new dependee dict containing dependency
                 size++;
             }
             //check if the dependent exists in the top level container
             else if(dependentExist == true)
             {
                 //check if desired dependency does not exists in low level container
-                if (!dependentDependencies.Item1.ContainsKey(s))
+                if (!dependentDependencies.Item1.Contains(s))
                 {
-                    dependentDependencies.Item1.Add(s, s); //add depedee dependency
+                    dependentDependencies.Item1.Add(s); //add depedee dependency
                     size++;
                 }
             }
 
 
             //check if the dependee does not exists in the top level container
-            if ((dependeeExist = adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependeeDependencies)) == false)
+            if ((dependeeExist = adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependeeDependencies)) == false)
             {
-                Dictionary<string, string> dependentDict = new Dictionary<string, string>(); //create new dependent dict for new top level dependent
-                dependentDict.Add(t, t); //add dependent to bottom level dict
+                HashSet<string> dependentHash = new HashSet<string>(); //create new dependent dict for new top level dependent
+                dependentHash.Add(t); //add dependent to bottom level dict
 
-                adjList.Add(s, new Tuple<Dictionary<string, string>, Dictionary<string, string>>(new Dictionary<string, string>(), dependentDict)); //add top level dependee with new dependent dict containing dependency
+                adjList.Add(s, new Tuple<HashSet<string>, HashSet<string>>(new HashSet<string>(), dependentHash)); //add top level dependee with new dependent dict containing dependency
             }
             //check if the dependee exists in the top level container
             else if (dependeeExist == true)
             {
                 //check if desired dependency does not exists in low level container
-                if (!dependeeDependencies.Item2.ContainsKey(t))
+                if (!dependeeDependencies.Item2.Contains(t))
                 {
-                    dependeeDependencies.Item2.Add(t, t); //add depedent dependency
+                    dependeeDependencies.Item2.Add(t); //add depedent dependency
                 }
             }
         }
@@ -183,20 +185,20 @@ namespace Dependencies
             bool sizeChange = false;
 
             //check if dependent does exist in top level container
-            if(adjList.TryGetValue(t, out Tuple<Dictionary<string,string>, Dictionary<string, string>> dependentDependencies) == true)
+            if(adjList.TryGetValue(t, out Tuple<HashSet<string>, HashSet<string>> dependentDependencies) == true)
             {
                 //check if dependency exist in bottom level container
-                if ((sizeChange = dependentDependencies.Item1.ContainsKey(s)) == true)
+                if ((sizeChange = dependentDependencies.Item1.Contains(s)) == true)
                 {
                     dependentDependencies.Item1.Remove(s); //remove (s,t) dependency from bot level container
                 }
             }
           
             //check if dependee exists in the top level container
-            if(adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependeeDependencies))
+            if(adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependeeDependencies))
             {
                 //check if dependency exists in bot level container
-                if (dependeeDependencies.Item2.ContainsKey(t))
+                if (dependeeDependencies.Item2.Contains(t))
                 {
                     dependeeDependencies.Item2.Remove(t);//remove (s,t) dependency from bot level container
                 }
@@ -219,13 +221,13 @@ namespace Dependencies
             List<string> oldDependents = new List<string>();
 
             //check if dependee exists in the top level container
-            if (adjList.TryGetValue(s, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
+            if (adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependencies))
             {
                 //check if there are any dependents associated in bot level container
                 if (dependencies.Item2.Count != 0)
                 {
                     //add all dependencies in the form (s,r) to a reference list bc you cannot enumerate and modify a dict
-                    foreach(string removeKey in dependencies.Item2.Keys)
+                    foreach(string removeKey in dependencies.Item2)
                     {
                         oldDependents.Add(removeKey);
                     }
@@ -254,13 +256,13 @@ namespace Dependencies
             List<string> oldDependees = new List<string>();
 
             //check if dependent exists in the top level container
-            if (adjList.TryGetValue(t, out Tuple<Dictionary<string, string>, Dictionary<string, string>> dependencies))
+            if (adjList.TryGetValue(t, out Tuple<HashSet<string>, HashSet<string>> dependencies))
             {
                 //check if there is a bot level container for dependees so we don't throw a nullpointer 
                 if (dependencies.Item1.Count != 0)
                 {
                     //add all dependees to list bc dict cannot be enumerated and modified concurrently
-                    foreach(string removeKey in dependencies.Item1.Keys)
+                    foreach(string removeKey in dependencies.Item1)
                     {
                         oldDependees.Add(removeKey);
                     }
