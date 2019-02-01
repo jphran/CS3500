@@ -19,6 +19,16 @@ namespace DevelopmentTests
         }
 
         [TestMethod()]
+        public void EmptyTest100()
+        {
+            DependencyGraph t = new DependencyGraph();
+            Assert.AreEqual(null, t.GetDependees("x"));
+            Assert.AreEqual(null, t.GetDependents("x"));
+
+        }
+
+
+        [TestMethod()]
         public void EmptyTest2()
         {
             DependencyGraph t = new DependencyGraph();
@@ -263,9 +273,16 @@ namespace DevelopmentTests
                 t.AddDependency("z", i.ToString());
             }
             Assert.AreEqual(200000, t.Size);
-
-
-
+            t.RemoveDependency("10", "a");
+            t.RemoveDependency("a", "11");
+            Assert.AreEqual(199999, t.Size);
+            t.ReplaceDependees("a", new HashSet<string>() { });
+            Assert.AreEqual(100000, t.Size);
+            t.ReplaceDependents("z", new HashSet<string> { });
+            Assert.AreEqual(0, t.Size);
+            
         }
+
+
     }
 }
