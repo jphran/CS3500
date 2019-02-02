@@ -1,6 +1,6 @@
 ﻿// Skeleton written by Joe Zachary for CS 3500, January 2019
 // Edited by Justin Francis, Jan 2019 v1.0+ ready for release (grade)
-//
+// Updated by Justin Francis, Feb 2019 v2.0.0 under devevelopement
 
 using System;
 using System.Collections;
@@ -47,7 +47,7 @@ namespace Formulas
             Stack lParen = new Stack(); //opening paren stack 
             Stack rParen = new Stack(); //closing paren stack
 
-            IEnumerable<Tuple<string, TokenType>> tokenEnum = GetTokens(formula);
+            IEnumerable<Token> tokenEnum = GetTokens(formula);
 
             //check and make sure there is at least one token (req 2)
             if (tokenEnum == null || !tokenEnum.GetEnumerator().MoveNext())
@@ -56,19 +56,19 @@ namespace Formulas
             }
 
             //consume enum and check inputted formula for syntatical correctness as defined in PS2 and the summary abovve
-            foreach (Tuple<string, TokenType> t in tokenEnum)
+            foreach (Token t in tokenEnum)
             {
 
                 //When reading tokens from left to right, at no point should the
                 //number of closing parentheses seen so far be greater than the number
                 //of opening parentheses seen so far (req 3)
-                if (t.Item2.Equals(LParen))
+                if (t.Type.Equals(LParen))
                 {
-                    lParen.Push(t.Item1);
+                    lParen.Push(t.Text);
                 }
-                else if (t.Item2.Equals(RParen))
+                else if (t.Type.Equals(RParen))
                 {
-                    rParen.Push(t.Item1);
+                    rParen.Push(t.Text);
                 }
                 //check parens 
                 if (rParen.Count > lParen.Count)
@@ -78,36 +78,36 @@ namespace Formulas
 
 
                 //check if first token is open paren (req 5)
-                if (t.Item2.Equals(RParen) && previous.Equals(null))
+                if (t.Type.Equals(RParen) && previous.Equals(null))
                 {
                     throw new FormulaFormatException("Formula starts with closing paren, please revise");
                 }
 
                 //check if first token is Oper (req 5)
-                if (t.Item2.Equals(Oper) && previous.Equals(null))
+                if (t.Type.Equals(Oper) && previous.Equals(null))
                 {
                     throw new FormulaFormatException("Formula starts with operator, please revise");
                 }
 
                 //Any token that immediately follows an opening parenthesis or an operator must be either a number, a variable, or an opening parenthesis (req 7)
-                if ((t.Item2.Equals(Oper) && (previous.Equals(Oper) || previous.Equals(LParen))) || (t.Item2.Equals(RParen) && (previous.Equals(Oper) || previous.Equals(LParen))))
+                if ((t.Type.Equals(Oper) && (previous.Equals(Oper) || previous.Equals(LParen))) || (t.Type.Equals(RParen) && (previous.Equals(Oper) || previous.Equals(LParen))))
                 {
                     throw new FormulaFormatException("Forumula contains back to back operators, please revise");
                 }
 
                 //token that immediately follows an opening parenthesis or an operator must be either a number, a variable, or an opening parenthesis (req 8)
-                if ((previous.Equals(Number) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen))) || (previous.Equals(Var) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen))) || (previous.Equals(RParen) && (!t.Item2.Equals(Oper) && !t.Item2.Equals(RParen))))
+                if ((previous.Equals(Number) && (!t.Type.Equals(Oper) && !t.Type.Equals(RParen))) || (previous.Equals(Var) && (!t.Type.Equals(Oper) && !t.Type.Equals(RParen))) || (previous.Equals(RParen) && (!t.Type.Equals(Oper) && !t.Type.Equals(RParen))))
                 {
                     throw new FormulaFormatException("Forumula contains back to back vars, numbers, or , please revise");
                 }
 
                 // no invalid tokens (req 1)
-                if (t.Item2.Equals(Invalid))
+                if (t.Type.Equals(Invalid))
                 {
                     throw new FormulaFormatException("Forumula contains invalid syntax, please revise");
                 }
 
-                previous = t.Item2;
+                previous = t.Type;
             }
 
             //check ending of formula for completion (req 6)
@@ -140,10 +140,10 @@ namespace Formulas
             Stack<string> operators = new Stack<string>();
 
             //consume enum and evaluate as appropriate
-            foreach (Tuple<string, TokenType> t in GetTokens(formula))
+            foreach (Token t in GetTokens(formula))
             {
-                TokenType tokenType = t.Item2; //short hand
-                string token = t.Item1; //short hand
+                TokenType tokenType = t.Type; //short hand
+                string token = t.Text; //short hand
 
                 //handles TokenType [Number] as defined in PS2
                 if (tokenType.Equals(Number))
@@ -331,7 +331,7 @@ namespace Formulas
         /// Tuple containing the token's text and TokenType.  There are no empty tokens, and no
         /// token contains white space.
         /// </summary>
-        private static IEnumerable<Tuple<string, TokenType>> GetTokens(String formula)
+        private static IEnumerable<Token> GetTokens(String formula)
         {
             // Patterns for individual tokens.
             String lpPattern = @"\(";
@@ -397,7 +397,7 @@ namespace Formulas
                     }
 
                     // Yield the token
-                    yield return new Tuple<string, TokenType>(match.Value, type);
+                    yield return new Token(match.Value, type);
                 }
 
                 // Look for the next match
@@ -497,5 +497,17 @@ namespace Formulas
         {
         }
     }
+    
 
+    public struct Token
+    {
+        public string Text;
+        public TokenType Type;
+
+        public Token(string text, TokenType type)
+        {
+            Text = text;
+            Type = type;
+        }
+    }
 }
