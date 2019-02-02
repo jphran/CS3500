@@ -108,7 +108,7 @@ namespace Dependencies
                 return dependencies.Item2;
             }
 
-            return null;
+            return new List<string>();
         }
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace Dependencies
                 return dependencies.Item1;
             }
 
-            return null;
+            return new List<string>();
         }
 
         /// <summary>

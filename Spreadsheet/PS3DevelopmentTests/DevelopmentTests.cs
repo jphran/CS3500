@@ -22,8 +22,8 @@ namespace DevelopmentTests
         public void EmptyTest100()
         {
             DependencyGraph t = new DependencyGraph();
-            Assert.AreEqual(null, t.GetDependees("x"));
-            Assert.AreEqual(null, t.GetDependents("x"));
+            Assert.IsFalse(t.GetDependees("x").GetEnumerator().MoveNext());
+            Assert.IsFalse(t.GetDependents("x").GetEnumerator().MoveNext());
 
         }
 
