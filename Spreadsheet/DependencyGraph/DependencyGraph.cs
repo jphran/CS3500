@@ -32,24 +32,11 @@ namespace Dependencies
     ///     dependees("b") = {"a"}
     ///     dependees("c") = {"a"}
     ///     dependees("d") = {"b", "d"}
-    ///     
-    /// All of the methods below require their string parameters to be non-null.  This means that 
-    /// the behavior of the method is undefined when a string parameter is null.  
-    ///
-    /// IMPORTANT IMPLEMENTATION NOTE
     /// 
-    /// The simplest way to describe a DependencyGraph and its methods is as a set of dependencies, 
-    /// as discussed above.
-    /// 
-    /// However, physically representing a DependencyGraph as, say, a set of ordered pairs will not
-    /// yield an acceptably efficient representation.  DO NOT USE SUCH A REPRESENTATION.
-    /// 
-    /// You'll need to be more clever than that.  Design a representation that is both easy to work
-    /// with as well acceptably efficient according to the guidelines in the PS3 writeup. Some of
-    /// the test cases with which you will be graded will create massive DependencyGraphs.  If you
-    /// build an inefficient DependencyGraph this week, you will be regretting it for the next month.
+    /// If a paramaeter to a method below is null, the method will throw ArgumentNullException with appropriate 
+    /// message
     /// </summary>
-    public class DependencyGraph
+    public class DependencyGraph : ICloneable
     {
         //item1 = dependee list, item2 = dependent list
         private Dictionary<string, Tuple<HashSet<string>, HashSet<string>>> adjList;
@@ -64,6 +51,12 @@ namespace Dependencies
             size = 0;
         }
 
+        public DependencyGraph(DependencyGraph dg)
+        {
+            this.adjList = (Dictionary<string, Tuple<HashSet<string>, HashSet<string>>>) dg.Clone();
+            this.size = dg.Size;
+        }
+
         /// <summary>
         /// The number of dependencies in the DependencyGraph.
         /// </summary>
@@ -73,10 +66,17 @@ namespace Dependencies
         }
 
         /// <summary>
-        /// Reports whether dependents(s) is non-empty.  Requires s != null.
+        /// Reports whether dependents(s) is non-empty.  Throws ArgumentNullException if s == null.
         /// </summary>
         public bool HasDependents(string s)
         {
+            //check if param is null
+            if(s == null)
+            {
+                throw new ArgumentNullException("HasDependents entered param is null, please revise");
+            }
+
+            //check if the string s exists as a dependee in hashmap
             if(adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependencies))
             {
                return dependencies.Item2.GetEnumerator().MoveNext();
@@ -86,10 +86,17 @@ namespace Dependencies
         }
 
         /// <summary>
-        /// Reports whether dependees(s) is non-empty.  Requires s != null.
+        /// Reports whether dependees(s) is non-empty.  Throw ArgumentNullException if s == null.
         /// </summary>
         public bool HasDependees(string s)
         {
+            //check if param is null
+            if (s == null)
+            {
+                throw new ArgumentNullException("HasDependees entered param is null, please revise");
+            }
+
+            //check if desired dependent exists
             if (adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependencies))
             {
                 return dependencies.Item1.GetEnumerator().MoveNext();
@@ -99,10 +106,17 @@ namespace Dependencies
         }
 
         /// <summary>
-        /// Enumerates dependents(s).  Requires s != null.
+        /// Enumerates dependents(s).  Throws ArgumentNullException if s == null.
         /// </summary>
         public IEnumerable<string> GetDependents(string s)
         {
+            //check if param is null
+            if (s == null)
+            {
+                throw new ArgumentNullException("GetDependents entered param is null, please revise");
+            }
+
+            //check if dependee exists
             if (adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependencies))
             {
                 return dependencies.Item2;
@@ -112,10 +126,17 @@ namespace Dependencies
         }
 
         /// <summary>
-        /// Enumerates dependees(s).  Requires s != null.
+        /// Enumerates dependees(s).  Throws ArgumentNullException if s == null.
         /// </summary>
         public IEnumerable<string> GetDependees(string s)
         {
+            //check if param is null
+            if (s == null)
+            {
+                throw new ArgumentNullException("HasDependents entered param is null, please revise");
+            }
+
+            //check if dependent exists
             if (adjList.TryGetValue(s, out Tuple<HashSet<string>, HashSet<string>> dependencies))
             {
                 return dependencies.Item1;
@@ -127,10 +148,17 @@ namespace Dependencies
         /// <summary>
         /// Adds the dependency (s,t) to this DependencyGraph.
         /// This has no effect if (s,t) already belongs to this DependencyGraph.
-        /// Requires s != null and t != null.
+        /// Throws ArgumentNullException if s == null or t == null.
         /// </summary>
         public void AddDependency(string s, string t)
-        { //s = dependee, t = dependent
+        {
+            //check if either param is null
+            if (s == null || t == null)
+            {
+                throw new ArgumentNullException("AddDependency entered param is null, please revise");
+            }
+
+            //s = dependee, t = dependent
             bool dependentExist; //space saver
             bool dependeeExist;
 
@@ -179,10 +207,17 @@ namespace Dependencies
         /// <summary>
         /// Removes the dependency (s,t) from this DependencyGraph.
         /// Does nothing if (s,t) doesn't belong to this DependencyGraph.
-        /// Requires s != null and t != null.
+        /// Throws new ArgumentNullException if s == null or t == null.
         /// </summary>
         public void RemoveDependency(string s, string t)
-        {// s = dependee, t = dependent
+        {
+            //check if param is null
+            if (s == null || t == null)
+            {
+                throw new ArgumentNullException("RemoveDependency entered param is null, please revise");
+            }
+
+            // s = dependee, t = dependent
             bool sizeChange = false;
 
             //check if dependent does exist in top level container
@@ -215,10 +250,17 @@ namespace Dependencies
         /// <summary>
         /// Removes all existing dependencies of the form (s,r).  Then, for each
         /// t in newDependents, adds the dependency (s,t).
-        /// Requires s != null and t != null.
+        /// Throws new ArgumentNullException if s == null or t == null.
         /// </summary>
         public void ReplaceDependents(string s, IEnumerable<string> newDependents)
-        { //s = dependee, t = dependent
+        {
+            //check if param is null
+            if (s == null || newDependents == null)
+            {
+                throw new ArgumentNullException("ReplaceDependents entered param is null, please revise");
+            }
+
+            //s = dependee, t = dependent
             List<string> oldDependents = new List<string>();
 
             //check if dependee exists in the top level container
@@ -243,6 +285,12 @@ namespace Dependencies
             //add all new dependents
             foreach(string t in newDependents)
             {
+                //check null dependent
+                if(t == null)
+                {
+                    throw new ArgumentNullException("Null Dependent in ReplaceDependents IEnumerable, please revise");
+                }
+
                 AddDependency(s, t); //this method takes care of a non existant s in top level container, if one exists it adds dependency
             }
         }
@@ -250,10 +298,16 @@ namespace Dependencies
         /// <summary>
         /// Removes all existing dependencies of the form (r,t).  Then, for each 
         /// s in newDependees, adds the dependency (s,t).
-        /// Requires s != null and t != null.
+        /// Throws new ArgumentNullException if  s == null or t == null.
         /// </summary>
         public void ReplaceDependees(string t, IEnumerable<string> newDependees)
-        { //s = dependee, t = dependent
+        {
+            //check if param is null
+            if (t == null || newDependees == null)
+            {
+                throw new ArgumentNullException("ReplaceDependees entered param is null, please revise");
+            }
+            //s = dependee, t = dependent
             List<string> oldDependees = new List<string>();
 
             //check if dependent exists in the top level container
@@ -278,9 +332,39 @@ namespace Dependencies
             //add all new dependees
             foreach (string s in newDependees)
             {
+                //check null value
+                if(s == null)
+                {
+                    throw new ArgumentNullException("Null dependee in ReplaceDependees IEnumerable, please revise");
+                }
+
                 AddDependency(s, t); //this method takes care of a non existant s in top level container, if one exists it adds dependency
             }
 
         }
+
+        public object Clone()
+        {
+            Dictionary<string, Tuple<HashSet<string>, HashSet<string>>> copy = new Dictionary<string, Tuple<HashSet<string>, HashSet<string>>>();
+            IEnumerable<string> keys = this.adjList.Keys;
+
+
+            foreach (string key in keys)
+            {
+                HashSet<string> copyDependees; // = new HashSet<string>();
+                HashSet<string> copyDependents; // = new HashSet<string>();
+                //Tuple<HashSet<string>, HashSet<string>> dependencies = new Tuple<HashSet<string>, HashSet<string>>(new HashSet<string>(), new HashSet<string>());
+                if (adjList.TryGetValue(key, out Tuple<HashSet<string>, HashSet<string>> dependencies))
+                {
+                    copyDependees = new HashSet<string>(dependencies.Item1);
+                    copyDependents = new HashSet<string>(dependencies.Item2);
+                    copy.Add(key, new Tuple<HashSet<string>, HashSet<string>>(copyDependees, copyDependents));
+                }
+            }
+            return copy;
+            // return new Dictionary<string, Tuple<HashSet<string>, HashSet<string>>>(this.adjList);
+        }
+
+        
     }
 }
