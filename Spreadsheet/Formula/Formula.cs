@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
 using static Formulas.TokenType;
 
@@ -20,6 +21,9 @@ namespace Formulas
     public class Formula
     {
         private string formula;
+        private List<Token> tokenList;
+        private HashSet<string> variableSet = new HashSet<string>();
+
         /// <summary>
         /// Creates a Formula from a string that consists of a standard infix expression composed
         /// from non-negative floating-point numbers (using C#-like syntax for double/int literals), 
@@ -42,7 +46,14 @@ namespace Formulas
         /// </summary>
         public Formula(String formula)
         {
+            //check if null argument 
+            if(formula == null)
+            {
+                throw new ArgumentNullException("Null formula, please revise");
+            }
+
             this.formula = formula; //idk how else to pass this to Evaluate()
+            this.tokenList = new List<Token>(); //list to pass to other constructor/evaluate
             TokenType? previous = null; //make TokenType an nullable type and set to null to check first token's TokenType
             Stack lParen = new Stack(); //opening paren stack 
             Stack rParen = new Stack(); //closing paren stack
@@ -107,7 +118,14 @@ namespace Formulas
                     throw new FormulaFormatException("Forumula contains invalid syntax, please revise");
                 }
 
+                //add vars to ISet to return in GetVariables()
+                if (t.Type.Equals(Var))
+                {
+                    variableSet.Add(t.Text);
+                }
+
                 previous = t.Type;
+                tokenList.Add(t);
             }
 
             //check ending of formula for completion (req 6)
@@ -124,6 +142,58 @@ namespace Formulas
 
         }
 
+        /// <summary>
+        /// TODO:
+        /// </summary>
+        /// <param name="formula"></param>
+        /// <param name="norm"></param>
+        /// <param name="valid"></param>
+        public Formula(string formula, Normalizer norm, Validator valid) : this(formula)
+        {
+            //check if null param
+            if(formula == null || norm == null || valid == null)
+            {
+                throw new ArgumentNullException("Null parameter, please revise");
+            }
+
+            Regex r = new Regex(@"[a-zA-Z][0-9a-zA-Z]*", RegexOptions.IgnorePatternWhitespace);
+            List<Token> normalizedTokenList = new List<Token>();
+
+            foreach (Token x in tokenList)
+            {
+                if (!r.IsMatch(norm(x.Text))) //check if N(x) is not a legal variable
+                {
+                    throw new FormulaFormatException("Invalid variable via Normalizer, please revise");
+                }
+                if (valid(norm(x.Text)) != true)
+                {
+                    throw new FormulaFormatException("Invalid variable via Validator, please revise");
+                }
+
+                if (x.Type.Equals(Var))
+                {
+                    normalizedTokenList.Add(new Token(norm(x.Text), Var));
+                    variableSet.Add(x.Text);
+                }
+                else if(!x.Type.Equals(Var))
+                {
+                    normalizedTokenList.Add(x);
+                }
+            }
+
+            tokenList = normalizedTokenList;
+
+
+        }
+
+        /// <summary>
+        /// TODO:
+        /// </summary>
+        /// <returns></returns>
+        public ISet<string> GetVariables()
+        {
+            return variableSet;
+        }
 
         /// <summary>
         /// Evaluates this Formula, using the Lookup delegate to determine the values of variables.  (The
@@ -136,11 +206,17 @@ namespace Formulas
         /// </summary>
         public double Evaluate(Lookup lookup)
         {
+            //check if null param
+            if(lookup == null)
+            {
+                throw new ArgumentNullException("Null Lookup delegate, please revise");
+            }
+
             Stack<double> values = new Stack<double>();
             Stack<string> operators = new Stack<string>();
 
             //consume enum and evaluate as appropriate
-            foreach (Token t in GetTokens(formula))
+            foreach (Token t in tokenList)
             {
                 TokenType tokenType = t.Type; //short hand
                 string token = t.Text; //short hand
@@ -155,7 +231,7 @@ namespace Formulas
                     }
                     else if (OpPeek(operators, "/")) //check operator stack for division oper
                     {
-                        if(double.Parse(token) == 0.0) //check for divide by 0
+                        if (double.Parse(token) == 0.0) //check for divide by 0
                         {
                             throw new FormulaEvaluationException("Cannot divide by zero, please revise");
                         }
@@ -180,7 +256,7 @@ namespace Formulas
                         }
                         else if (OpPeek(operators, "/")) //check top of oper stack for divide oper
                         {
-                            if(values.Peek() == 0.0 || lookup(token) == 0.0) //check against division by zero
+                            if (values.Peek() == 0.0 || lookup(token) == 0.0) //check against division by zero
                             {
                                 throw new FormulaEvaluationException("Cannot divide by zero, please revise");
                             }
@@ -261,7 +337,7 @@ namespace Formulas
                     }
                     else if (OpPeek(operators, "/")) //check top of oper for /
                     {
-                        if(values.Peek() == 0.0) //check against division by zero
+                        if (values.Peek() == 0.0) //check against division by zero
                         {
                             throw new FormulaEvaluationException("Cannot divide by zero, please revise");
                         }
@@ -320,9 +396,30 @@ namespace Formulas
         }
 
 
+        /// <summary>
+        /// TODO:
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            //most likely (almost 100% uncessary) but caution gets A's
+            if(this == null)
+            {
+                throw new ArgumentNullException("Null formula, please revise");
+            }
+
+            StringBuilder sb = new StringBuilder();
+            foreach(Token t in tokenList)
+            {
+                sb.Append(t.Text);
+            }
+
+            return sb.ToString();
+        }
+
 
         //Justin did not edit below this line
-//*******************************************************************************************
+        //*******************************************************************************************
 
 
 
@@ -451,6 +548,8 @@ namespace Formulas
     /// don't is up to the implementation of the method.
     /// </summary>
     public delegate double Lookup(string var);
+    public delegate string Normalizer(string s);
+    public delegate bool Validator(string s);
 
     /// <summary>
     /// Used to report that a Lookup delegate is unable to determine the value
@@ -497,8 +596,10 @@ namespace Formulas
         {
         }
     }
-    
 
+    /// <summary>
+    /// created to store the value of a token as Text and the TokenType as Type
+    /// </summary>
     public struct Token
     {
         public string Text;
