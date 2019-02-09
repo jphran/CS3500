@@ -220,10 +220,10 @@ namespace Formulas
         /// <returns></returns>
         public ISet<string> GetVariables()
         {
-            if(this == null)
-            {
-                throw new ArgumentNullException("Cannot get variables from null formula, please revise");
-            }
+            //if(this == null)
+            //{
+            //    throw new ArgumentNullException("Cannot get variables from null formula, please revise");
+            //}
 
             return variableSet;
         }
@@ -343,10 +343,10 @@ namespace Formulas
                 else if (tokenType.Equals(RParen))
                 {
                     //redundency of (req 3)
-                    if (operators.Count == 0)
-                    {
-                        throw new FormulaFormatException("No opening paren");
-                    }
+                    //if (operators.Count == 0)
+                    //{
+                    //    throw new FormulaFormatException("No opening paren");
+                    //}
 
                     if (OpPeek(operators, "+")) //check oper stack for +
                     {
@@ -379,11 +379,11 @@ namespace Formulas
                     }
                 }
 
-                //handles TokenType [Invalid] as defined in PS2
-                else if (tokenType.Equals(Invalid))
-                {
-                    throw new FormulaEvaluationException("Formula contains invalid sytax, please try again");
-                }
+                //handles TokenType [Invalid] as defined in PS2, redundancy
+                //else if (tokenType.Equals(Invalid))
+                //{
+                //    throw new FormulaEvaluationException("Formula contains invalid sytax, please try again");
+                //}
             }
 
             //finish evaluating rest expression if there is still objects in oper stack
@@ -436,10 +436,10 @@ namespace Formulas
         public override string ToString()
         {
             //most likely (almost 100% uncessary) but caution gets A's
-            if (this == null)
-            {
-                throw new ArgumentNullException("Null formula, please revise");
-            }
+            //if (this == null)
+            //{
+            //    throw new ArgumentNullException("Null formula, please revise");
+            //}
 
             StringBuilder sb = new StringBuilder();
             foreach (Token t in tokenList)

@@ -340,6 +340,26 @@ namespace FormulaTestCases
             Assert.AreEqual(h.Evaluate(Lookup4), 25.88888888888, 1e-6);
         }
 
+        /// <summary>
+        /// test valid formulas
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(FormulaFormatException))]
+        public void WhiteBox()
+        {
+            Formula f = new Formula(")");
+        }
+
+        /// <summary>
+        /// test valid formulas
+        /// </summary>
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void WhiteBox1()
+        {
+            Formula f = new Formula("2+5");
+            f.Evaluate(null);
+        }
 
 
         // "_"

@@ -124,5 +124,14 @@ namespace PS4aDevelopmentTests
             Formula f1 = new Formula("x2 * y6 /  j8", s => s, null);
 
         }
+
+        //[TestMethod]
+        //[ExpectedException(typeof(ArgumentNullException))]
+        //public void CheckNullMethods4()
+        //{
+        //    Formula f1 = null;
+        //    f1.ToString();
+
+        //}
     }
 }
