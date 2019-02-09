@@ -191,5 +191,43 @@ namespace PS4DevelopmentTests
             Assert.IsTrue(dg2.HasDependees("k"));
             Assert.IsFalse(dg1.HasDependents("c"));
         }
+
+        [TestMethod]
+        public void TimingConstructorDGParam1()
+        {
+            DependencyGraph dg1 = new DependencyGraph();
+            for(int i = 0; i < 10000; i++)
+            {
+                dg1.AddDependency(i.ToString(), "a");
+            }
+            DependencyGraph dg2 = new DependencyGraph(dg1);
+
+            Assert.AreEqual(10000, dg2.Size);
+            Assert.IsTrue(dg2.HasDependees("a"));
+            Assert.IsTrue(dg2.HasDependents("559"));
+        }
+
+        [TestMethod]
+        public void TimingConstructorDGParam2()
+        {
+            DependencyGraph dg1 = new DependencyGraph();
+            for (int i = 0; i < 1000; i++)
+            {
+                for (int j = 0; j < 1000; j++)
+                {
+                    dg1.AddDependency(i.ToString(), j.ToString());
+                }
+            }
+            DependencyGraph dg2 = new DependencyGraph(dg1);
+
+            Assert.AreEqual(1e6, dg2.Size);
+            Assert.AreEqual(1e6, dg1.Size);
+            Assert.IsTrue(dg2.HasDependees("973"));
+            Assert.IsTrue(dg2.HasDependents("7"));
+
+            dg1.RemoveDependency("1", "1");
+            Assert.AreEqual(1e6 - 1, dg1.Size);
+            Assert.AreEqual(1e6, dg2.Size);
+        }
     }
 }

@@ -2,6 +2,9 @@
 // Edited by Justin Francis, jan 2019
 // Ready for Submission, 1/31/19
 
+//Revised by Justin Francis, Feb 2019
+//Ready for submission, 2.8.19
+
 
 using System;
 using System.Collections.Generic;
@@ -50,7 +53,12 @@ namespace Dependencies
             adjList = new Dictionary<string, Tuple<HashSet<string>, HashSet<string>>>();
             size = 0;
         }
-
+        
+        /// <summary>
+        /// Creates a new DependencyGraph containing all dependencies contained in Dependency 
+        /// Graph param
+        /// </summary>
+        /// <param name="dg"></param>
         public DependencyGraph(DependencyGraph dg)
         {
             this.adjList = (Dictionary<string, Tuple<HashSet<string>, HashSet<string>>>) dg.Clone();
@@ -343,28 +351,39 @@ namespace Dependencies
 
         }
 
+        /// <summary>
+        /// Creates a deep clone of dependency graph, returns type
+        /// Dictionary<string, Tuple<HashSet<string>, HashSet<string>>> </string></string>
+        /// which is the underlying adjacency list
+        /// </summary>
+        /// <returns></returns>
         public object Clone()
         {
+            //hey so whoever reads this and knows a bit about this code stuff
+            //is there a better way of creating and passing a clone of dependencies?
+            //like can I somehow create a private method or something? I just feel like having
+            //a public cloning method is bad form, PLZ LEMME KNOW CAUSE I DON'T KNOW ANYTHING
+            //like I don't know how to access the underlying structure to efficiently capture all
+            //key, value pairs in the underlying dictionary bc its a private variable as Dr Zachary
+            //recommended
             Dictionary<string, Tuple<HashSet<string>, HashSet<string>>> copy = new Dictionary<string, Tuple<HashSet<string>, HashSet<string>>>();
-            IEnumerable<string> keys = this.adjList.Keys;
+            IEnumerable<string> keys = this.adjList.Keys; //get keys from adjList
 
-
+            //iterate through keys to deep clone dictionary
             foreach (string key in keys)
             {
-                HashSet<string> copyDependees; // = new HashSet<string>();
-                HashSet<string> copyDependents; // = new HashSet<string>();
-                //Tuple<HashSet<string>, HashSet<string>> dependencies = new Tuple<HashSet<string>, HashSet<string>>(new HashSet<string>(), new HashSet<string>());
+                HashSet<string> copyDependees; 
+                HashSet<string> copyDependents; 
+                
+                //this is just good practice apparently
                 if (adjList.TryGetValue(key, out Tuple<HashSet<string>, HashSet<string>> dependencies))
                 {
-                    copyDependees = new HashSet<string>(dependencies.Item1);
-                    copyDependents = new HashSet<string>(dependencies.Item2);
-                    copy.Add(key, new Tuple<HashSet<string>, HashSet<string>>(copyDependees, copyDependents));
+                    copyDependees = new HashSet<string>(dependencies.Item1); //copy dependees
+                    copyDependents = new HashSet<string>(dependencies.Item2); //copy dependents
+                    copy.Add(key, new Tuple<HashSet<string>, HashSet<string>>(copyDependees, copyDependents)); //add dependencies to copy
                 }
             }
             return copy;
-            // return new Dictionary<string, Tuple<HashSet<string>, HashSet<string>>>(this.adjList);
         }
-
-        
     }
 }
