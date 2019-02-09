@@ -1,6 +1,6 @@
 ﻿// Skeleton written by Joe Zachary for CS 3500, January 2019
 // Edited by Justin Francis, Jan 2019 v1.0+ ready for release (grade)
-// Updated by Justin Francis, Feb 2019 v2.0.0 under devevelopement
+// Updated by Justin Francis, Feb 2019 v2.0.1 ready for release (grade)
 
 using System;
 using System.Collections;
@@ -143,7 +143,24 @@ namespace Formulas
         }
 
         /// <summary>
-        /// TODO:
+        /// Creates a Formula from a string that consists of a standard infix expression composed
+        /// from non-negative floating-point numbers (using C#-like syntax for double/int literals), 
+        /// variable symbols (a letter followed by zero or more letters and/or digits), left and right
+        /// parentheses, and the four binary operator symbols +, -, *, and /.  White space is
+        /// permitted between tokens, but is not required.
+        /// Uses a Normalizer and Validator on all variables
+        /// Examples of a valid parameter to this constructor are:
+        ///     "2.5e9 + x5 / 17"
+        ///     "(5 * 2) + 8"
+        ///     "x*y-2+35/9"
+        ///     
+        /// Examples of invalid parameters are:
+        ///     "_"
+        ///     "-5.3"
+        ///     "2 5 + 3"
+        /// 
+        /// If the formula is syntacticaly invalid, throws a FormulaFormatException with an 
+        /// explanatory Message. 
         /// </summary>
         /// <param name="formula"></param>
         /// <param name="norm"></param>
@@ -198,7 +215,7 @@ namespace Formulas
         }
 
         /// <summary>
-        /// TODO:
+        /// Returns ISet<string> of all normalized variables</string>
         /// </summary>
         /// <returns></returns>
         public ISet<string> GetVariables()
@@ -413,7 +430,7 @@ namespace Formulas
 
 
         /// <summary>
-        /// TODO:
+        /// Returns string version of normalized formula
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -434,8 +451,6 @@ namespace Formulas
         }
 
 
-        //Justin did not edit below this line
-        //*******************************************************************************************
 
 
 
@@ -614,7 +629,7 @@ namespace Formulas
     }
 
     /// <summary>
-    /// created to store the value of a token as Text and the TokenType as Type
+    /// Used to store the value of a token as Text and the TokenType as Type to save heap space
     /// </summary>
     public struct Token
     {
