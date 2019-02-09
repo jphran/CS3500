@@ -47,7 +47,7 @@ namespace Formulas
         public Formula(String formula)
         {
             //check if null argument 
-            if(formula == null)
+            if (formula == null)
             {
                 throw new ArgumentNullException("Null formula, please revise");
             }
@@ -150,8 +150,11 @@ namespace Formulas
         /// <param name="valid"></param>
         public Formula(string formula, Normalizer norm, Validator valid) : this(formula)
         {
+            //delete vars from variableSet if previously ran in single param constructor
+            variableSet.Clear();
+
             //check if null param
-            if(formula == null || norm == null || valid == null)
+            if (formula == null || norm == null || valid == null)
             {
                 throw new ArgumentNullException("Null parameter, please revise");
             }
@@ -161,23 +164,31 @@ namespace Formulas
 
             foreach (Token x in tokenList)
             {
-                if (!r.IsMatch(norm(x.Text))) //check if N(x) is not a legal variable
-                {
-                    throw new FormulaFormatException("Invalid variable via Normalizer, please revise");
-                }
-                if (valid(norm(x.Text)) != true)
-                {
-                    throw new FormulaFormatException("Invalid variable via Validator, please revise");
-                }
-
+                //if the token is a variable, add the token to the normalized list and the var to variable set
                 if (x.Type.Equals(Var))
                 {
-                    normalizedTokenList.Add(new Token(norm(x.Text), Var));
-                    variableSet.Add(x.Text);
+                    string normalizedVar = norm(x.Text);
+
+                    if (!r.IsMatch(normalizedVar)) //check if N(x) is not a legal variable
+                    {
+                        throw new FormulaFormatException("Invalid variable via Normalizer, please revise");
+                    }
+                    if (valid(normalizedVar) != true) //check if V(N(x)) is false aka invalid
+                    {
+                        throw new FormulaFormatException("Invalid variable via Validator, please revise");
+                    }
+
+
+                    normalizedTokenList.Add(new Token(normalizedVar, Var));
+                    variableSet.Add(normalizedVar);
+
+
+
                 }
-                else if(!x.Type.Equals(Var))
+
+                else
                 {
-                    normalizedTokenList.Add(x);
+                    normalizedTokenList.Add(x); //only add token to normalized list
                 }
             }
 
@@ -192,6 +203,11 @@ namespace Formulas
         /// <returns></returns>
         public ISet<string> GetVariables()
         {
+            if(this == null)
+            {
+                throw new ArgumentNullException("Cannot get variables from null formula, please revise");
+            }
+
             return variableSet;
         }
 
@@ -207,7 +223,7 @@ namespace Formulas
         public double Evaluate(Lookup lookup)
         {
             //check if null param
-            if(lookup == null)
+            if (lookup == null)
             {
                 throw new ArgumentNullException("Null Lookup delegate, please revise");
             }
@@ -403,13 +419,13 @@ namespace Formulas
         public override string ToString()
         {
             //most likely (almost 100% uncessary) but caution gets A's
-            if(this == null)
+            if (this == null)
             {
                 throw new ArgumentNullException("Null formula, please revise");
             }
 
             StringBuilder sb = new StringBuilder();
-            foreach(Token t in tokenList)
+            foreach (Token t in tokenList)
             {
                 sb.Append(t.Text);
             }
