@@ -9,9 +9,12 @@ using Formulas;
 
 namespace SS
 {
-    class Spreadsheet : AbstractSpreadsheet
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Spreadsheet : AbstractSpreadsheet
     {
-        private Dictionary<string, object> table;
+        private Dictionary<string, Cell> table;
         private DependencyGraph dg = new DependencyGraph();
         private static Regex r = new Regex(@"[a-zA-Z]+[1-9]\d*", RegexOptions.IgnorePatternWhitespace);
 
@@ -56,7 +59,7 @@ namespace SS
         /// A1 depends on B1, which depends on C1, which depends on A1.  That's a circular
         /// dependency.
         /// </summary>
-        public Spreadsheet() => table = new Dictionary<string, object>();
+        public Spreadsheet() => table = new Dictionary<string, Cell>();
 
         /// <summary>
         /// If name is null or invalid, throws an InvalidNameException.
@@ -71,8 +74,12 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            table.TryGetValue(name, out object contents);
-            return contents;
+            if(table.TryGetValue(name, out Cell cell))
+            {
+                return cell.contents;
+            }
+
+            return "";
         }
 
         /// <summary>
@@ -80,7 +87,20 @@ namespace SS
         /// </summary>
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
         {
-            return table.Keys;
+            IEnumerable<string> keys = table.Keys;
+            HashSet<string> nonEmptyCells = new HashSet<string>();
+            
+            foreach(string s in keys)
+            {
+               if( table.TryGetValue(s, out Cell cell)) {
+                    if (!cell.contents.Equals(""))
+                    {
+                        nonEmptyCells.Add(s);
+                    }
+                }
+                
+            }
+            return nonEmptyCells;
         }
 
         /// <summary>
@@ -100,10 +120,17 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            table[name] = number;
+            table[name] = new Cell(name,number);
 
-            HashSet<string> set = new HashSet<string>(dg.GetDependents(name));
-            return set;
+            HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
+            IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
+            
+            foreach(string s in indirectDependents)
+            {
+                dependents.Add(s);
+            }
+
+            return dependents;
         }
 
         /// <summary>
@@ -125,10 +152,17 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            table[name] = text;
+            table[name] = new Cell(name,text);
 
-            HashSet<string> set = new HashSet<string>(dg.GetDependents(name));
-            return set;
+            HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
+            IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
+
+            foreach (string s in indirectDependents)
+            {
+                dependents.Add(s);
+            }
+
+            return dependents;
         }
 
         /// <summary>
@@ -153,10 +187,23 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            table[name] = formula;
+            foreach(string var in formula.GetVariables())
+            {
+                dg.AddDependency(var, name);
+            }
+            
 
-            HashSet<string> set = new HashSet<string>(dg.GetDependents(name));
-            return set;
+            HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
+            IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
+
+            foreach (string s in indirectDependents)
+            {
+                dependents.Add(s);
+            }
+
+            table[name] = new Cell(name, formula);
+
+            return dependents;
         }
 
         /// <summary>
@@ -199,9 +246,15 @@ namespace SS
     /// 
     /// </summary>
     public struct Cell
-    {
-        string name;
-        object contents;
+    { 
+        /// <summary>
+        /// Name (location) of cell in spreadsheet
+        /// </summary>
+        public string name;
+        /// <summary>
+        /// Contents within the cell
+        /// </summary>
+        public object contents;
 
         /// <summary>
         /// 

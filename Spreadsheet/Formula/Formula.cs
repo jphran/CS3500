@@ -142,6 +142,7 @@ namespace Formulas
 
         }
 
+
         /// <summary>
         /// Creates a Formula from a string that consists of a standard infix expression composed
         /// from non-negative floating-point numbers (using C#-like syntax for double/int literals), 
@@ -214,6 +215,7 @@ namespace Formulas
 
         }
 
+
         /// <summary>
         /// Returns ISet<string> of all normalized variables</string>
         /// </summary>
@@ -227,6 +229,7 @@ namespace Formulas
 
             return variableSet;
         }
+
 
         /// <summary>
         /// Evaluates this Formula, using the Lookup delegate to determine the values of variables.  (The
@@ -406,6 +409,7 @@ namespace Formulas
             return values.Pop(); //return only value left on val stack (if there is more than 1, something went terribly wrong)
         }
 
+
         /// <summary>
         /// Used to simplify peek command for operatiors stack. This is an ultra specific method for a Stack<double></double>
         /// </summary>
@@ -449,9 +453,6 @@ namespace Formulas
 
             return sb.ToString();
         }
-
-
-
 
 
         /// <summary>

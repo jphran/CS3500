@@ -130,7 +130,7 @@ namespace Dependencies
                 return dependencies.Item2;
             }
 
-            return new List<string>();
+            return new HashSet<string>();
         }
 
         /// <summary>
@@ -150,7 +150,7 @@ namespace Dependencies
                 return dependencies.Item1;
             }
 
-            return new List<string>();
+            return new HashSet<string>();
         }
 
         /// <summary>
