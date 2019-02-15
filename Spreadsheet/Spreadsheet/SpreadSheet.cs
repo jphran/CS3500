@@ -14,9 +14,9 @@ namespace SS
     /// </summary>
     public class Spreadsheet : AbstractSpreadsheet
     {
-        private Dictionary<string, Cell> table;
-        private DependencyGraph dg = new DependencyGraph();
-        private static Regex r = new Regex(@"[a-zA-Z]+[1-9]\d*", RegexOptions.IgnorePatternWhitespace);
+        private Dictionary<string, Cell> table; //holds cell location and contents/value
+        private DependencyGraph dg = new DependencyGraph(); //holds dependencies
+        private static Regex r = new Regex(@"[a-zA-Z]+[1-9]\d*", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
 
         /// <summary>
         /// A spreadsheet consists of an infinite number of named cells.
@@ -69,12 +69,12 @@ namespace SS
         /// </summary>
         public override object GetCellContents(string name)
         {
-            if (name == null || !r.IsMatch(name))
+            if (name == null || !r.IsMatch(name)) //check for inproper name
             {
                 throw new InvalidNameException();
             }
 
-            if(table.TryGetValue(name, out Cell cell))
+            if(table.TryGetValue(name, out Cell cell)) //pull appropriate cell from spreadsheet
             {
                 return cell.contents;
             }
@@ -87,10 +87,10 @@ namespace SS
         /// </summary>
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
         {
-            IEnumerable<string> keys = table.Keys;
-            HashSet<string> nonEmptyCells = new HashSet<string>();
+            IEnumerable<string> keys = table.Keys; //pull all cells
+            HashSet<string> nonEmptyCells = new HashSet<string>(); //container for nonempty cells names
             
-            foreach(string s in keys)
+            foreach(string s in keys) //find nonempty cells
             {
                if( table.TryGetValue(s, out Cell cell)) {
                     if (!cell.contents.Equals(""))
@@ -115,13 +115,14 @@ namespace SS
         /// </summary>
         public override ISet<string> SetCellContents(string name, double number)
         {
-            if (name == null || !r.IsMatch(name))
+            if (name == null || !r.IsMatch(name)) //check for inappropriate name
             {
                 throw new InvalidNameException();
             }
 
-            table[name] = new Cell(name,number);
+            table[name] = new Cell(number); //reset value in dictionary
 
+            // create iset full of dependencies both direct and indirect
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
             
@@ -147,13 +148,15 @@ namespace SS
         /// </summary>
         public override ISet<string> SetCellContents(string name, string text)
         {
-            if (name == null || !r.IsMatch(name))
+            if (name == null || !r.IsMatch(name)) //check inapropriate name
             {
                 throw new InvalidNameException();
             }
 
-            table[name] = new Cell(name,text);
+            table[name] = new Cell(text); //update value
 
+
+            //crete iset of dependencies both direct and indirect
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
 
@@ -182,17 +185,17 @@ namespace SS
         /// </summary>
         public override ISet<string> SetCellContents(string name, Formula formula)
         {
-            if (name == null || !r.IsMatch(name))
+            if (name == null || !r.IsMatch(name)) //check for inapropriate name
             {
                 throw new InvalidNameException();
             }
 
-            foreach(string var in formula.GetVariables())
+            foreach(string var in formula.GetVariables()) //add dependencies to dictionary
             {
                 dg.AddDependency(var, name);
             }
             
-
+            //create set of dependencies both indirect and direct
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
 
@@ -201,7 +204,7 @@ namespace SS
                 dependents.Add(s);
             }
 
-            table[name] = new Cell(name, formula);
+            table[name] = new Cell(formula); //update dictionary
 
             return dependents;
         }
@@ -243,28 +246,28 @@ namespace SS
     }
 
     /// <summary>
-    /// 
+    /// individual container for contents and value of spreadsheets
     /// </summary>
     public struct Cell
     { 
         /// <summary>
-        /// Name (location) of cell in spreadsheet
-        /// </summary>
-        public string name;
-        /// <summary>
         /// Contents within the cell
         /// </summary>
         public object contents;
+        /// <summary>
+        /// Value of cell in spreadsheet
+        /// </summary>
+        public object value; //needed for PS6
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="_name"></param>
         /// <param name="_contents"></param>
-        public Cell(string _name, object _contents)
+        /// <param name="_value"></param>
+        public Cell(object _contents, object _value = null)
         {
-            this.name = _name;
             this.contents = _contents;
+            this.value = _value; 
         }
     }
 

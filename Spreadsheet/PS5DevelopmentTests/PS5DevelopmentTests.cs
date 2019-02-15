@@ -200,7 +200,41 @@ namespace DevelopmentTests
             
         }
 
+        //throws
+        [TestMethod()]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void JTest12()
+        {
+            AbstractSpreadsheet s = new Spreadsheet();
+            s.GetCellContents(null);
+        }
 
+        //throws
+        [TestMethod()]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void JTest13()
+        {
+            AbstractSpreadsheet s = new Spreadsheet();
+            s.SetCellContents(null, 11);
+        }
+
+        //throws
+        [TestMethod()]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void JTest14()
+        {
+            AbstractSpreadsheet s = new Spreadsheet();
+            s.SetCellContents(null, "hello");
+        }
+
+        //throws
+        [TestMethod()]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void JTest15()
+        {
+            AbstractSpreadsheet s = new Spreadsheet();
+            s.SetCellContents("A0", "hello");
+        }
 
     }
 }
