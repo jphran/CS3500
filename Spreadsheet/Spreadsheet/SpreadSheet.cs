@@ -69,7 +69,7 @@ namespace SS
         /// </summary>
         public override object GetCellContents(string name)
         {
-            if (name.Equals(null) || !r.IsMatch(name))
+            if (name == null || !r.IsMatch(name))
             {
                 throw new InvalidNameException();
             }
@@ -115,7 +115,7 @@ namespace SS
         /// </summary>
         public override ISet<string> SetCellContents(string name, double number)
         {
-            if (name.Equals(null) || !r.IsMatch(name))
+            if (name == null || !r.IsMatch(name))
             {
                 throw new InvalidNameException();
             }
@@ -147,7 +147,7 @@ namespace SS
         /// </summary>
         public override ISet<string> SetCellContents(string name, string text)
         {
-            if (name.Equals(null) || !r.IsMatch(name))
+            if (name == null || !r.IsMatch(name))
             {
                 throw new InvalidNameException();
             }
@@ -182,7 +182,7 @@ namespace SS
         /// </summary>
         public override ISet<string> SetCellContents(string name, Formula formula)
         {
-            if (name.Equals(null) || !r.IsMatch(name))
+            if (name == null || !r.IsMatch(name))
             {
                 throw new InvalidNameException();
             }
@@ -225,7 +225,7 @@ namespace SS
         /// </summary>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
-            if (name.Equals(null))
+            if (name == null)
             {
                 throw new ArgumentNullException();
             }
