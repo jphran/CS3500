@@ -6,7 +6,7 @@
     <ProjectGuid>{1C99F6AA-F242-49AD-A1C4-8B60B583351D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PS5GradingTests</RootNamespace>
+    <RootNamespace>GradingTests</RootNamespace>
     <AssemblyName>PS5GradingTests</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
