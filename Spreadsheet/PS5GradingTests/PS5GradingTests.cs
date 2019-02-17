@@ -34,7 +34,7 @@ namespace GradingTests
         }
 
         // EMPTY SPREADSHEETS
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(InvalidNameException))]
         public void Test1()
         {
@@ -42,7 +42,7 @@ namespace GradingTests
             s.GetCellContents(null);
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(InvalidNameException))]
         public void Test2()
         {
@@ -50,7 +50,7 @@ namespace GradingTests
             s.GetCellContents("AA");
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test3()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -58,7 +58,7 @@ namespace GradingTests
         }
 
         // SETTING CELL TO A DOUBLE
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(InvalidNameException))]
         public void Test4()
         {
@@ -66,7 +66,7 @@ namespace GradingTests
             s.SetCellContents(null, 1.5);
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(InvalidNameException))]
         public void Test5()
         {
@@ -74,7 +74,7 @@ namespace GradingTests
             s.SetCellContents("A1A", 1.5);
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test6()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -83,7 +83,7 @@ namespace GradingTests
         }
 
         // SETTING CELL TO A STRING
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void Test7()
         {
@@ -91,7 +91,7 @@ namespace GradingTests
             s.SetCellContents("A8", (string)null);
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(InvalidNameException))]
         public void Test8()
         {
@@ -99,7 +99,7 @@ namespace GradingTests
             s.SetCellContents(null, "hello");
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(InvalidNameException))]
         public void Test9()
         {
@@ -107,7 +107,7 @@ namespace GradingTests
             s.SetCellContents("AZ", "hello");
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test10()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -116,7 +116,7 @@ namespace GradingTests
         }
 
         // SETTING CELL TO A FORMULA
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(InvalidNameException))]
         public void Test11()
         {
@@ -124,7 +124,7 @@ namespace GradingTests
             s.SetCellContents(null, new Formula("2"));
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(InvalidNameException))]
         public void Test12()
         {
@@ -132,7 +132,7 @@ namespace GradingTests
             s.SetCellContents("AZ", new Formula("2"));
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test13()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -142,7 +142,7 @@ namespace GradingTests
         }
 
         // CIRCULAR FORMULA DETECTION
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(CircularException))]
         public void Test14()
         {
@@ -151,7 +151,7 @@ namespace GradingTests
             s.SetCellContents("A2", new Formula("A1"));
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(CircularException))]
         public void Test15()
         {
@@ -162,7 +162,7 @@ namespace GradingTests
             s.SetCellContents("A7", new Formula("A1+A1"));
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(CircularException))]
         public void Test16()
         {
@@ -182,14 +182,14 @@ namespace GradingTests
         }
 
         // NONEMPTY CELLS
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test17()
         {
             AbstractSpreadsheet s = new Spreadsheet();
             Assert.IsFalse(s.GetNamesOfAllNonemptyCells().GetEnumerator().MoveNext());
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test18()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -197,7 +197,7 @@ namespace GradingTests
             Assert.IsFalse(s.GetNamesOfAllNonemptyCells().GetEnumerator().MoveNext());
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test19()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -206,7 +206,7 @@ namespace GradingTests
             Assert.IsFalse(s.GetNamesOfAllNonemptyCells().GetEnumerator().MoveNext());
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test20()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -214,7 +214,7 @@ namespace GradingTests
             AssertSetEqualsIgnoreCase(s.GetNamesOfAllNonemptyCells(), new string[] { "B1" });
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test21()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -222,7 +222,7 @@ namespace GradingTests
             AssertSetEqualsIgnoreCase(s.GetNamesOfAllNonemptyCells(), new string[] { "B1" });
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test22()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -230,7 +230,7 @@ namespace GradingTests
             AssertSetEqualsIgnoreCase(s.GetNamesOfAllNonemptyCells(), new string[] { "B1" });
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test23()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -241,7 +241,7 @@ namespace GradingTests
         }
 
         // RETURN VALUE OF SET CELL CONTENTS
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test24()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -250,7 +250,7 @@ namespace GradingTests
             AssertSetEqualsIgnoreCase(s.SetCellContents("A1", 17.2), new string[] { "A1" });
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test25()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -259,7 +259,7 @@ namespace GradingTests
             AssertSetEqualsIgnoreCase(s.SetCellContents("B1", "hello"), new string[] { "B1" });
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test26()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -268,7 +268,7 @@ namespace GradingTests
             AssertSetEqualsIgnoreCase(s.SetCellContents("C1", new Formula("5")), new string[] { "C1" });
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test27()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -281,7 +281,7 @@ namespace GradingTests
         }
 
         // CHANGING CELLS
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test28()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -290,7 +290,7 @@ namespace GradingTests
             Assert.AreEqual(2.5, (double)s.GetCellContents("A1"), 1e-9);
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test29()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -299,7 +299,7 @@ namespace GradingTests
             Assert.AreEqual("Hello", (string)s.GetCellContents("A1"));
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test30()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -309,7 +309,7 @@ namespace GradingTests
         }
 
         // STRESS TESTS
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test31()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -331,23 +331,23 @@ namespace GradingTests
             ISet<String> cells = s.SetCellContents("E1", 0);
             AssertSetEqualsIgnoreCase(new HashSet<string>() { "A1", "B1", "B2", "C1", "C2", "C3", "C4", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "E1" }, cells);
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test32()
         {
             Test31();
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test33()
         {
             Test31();
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test34()
         {
             Test31();
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test35()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -358,22 +358,22 @@ namespace GradingTests
                 AssertSetEqualsIgnoreCase(cells, s.SetCellContents("A" + i, new Formula("A" + (i + 1))));
             }
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test36()
         {
             Test35();
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test37()
         {
             Test35();
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test38()
         {
             Test35();
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test39()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -390,23 +390,23 @@ namespace GradingTests
             {
             }
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test40()
         {
             Test39();
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test41()
         {
             Test39();
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test42()
         {
             Test39();
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test43()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -432,38 +432,38 @@ namespace GradingTests
 
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test44()
         {
             Test43();
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test45()
         {
             Test43();
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test46()
         {
             Test43();
         }
 
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test47()
         {
             RunRandomizedTest(47, 2519);
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test48()
         {
             RunRandomizedTest(48, 2521);
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test49()
         {
             RunRandomizedTest(49, 2526);
         }
-        [TestMethod()]
+        [TestMethod, Timeout(3000)]
         public void Test50()
         {
             RunRandomizedTest(50, 2521);
