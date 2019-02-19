@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -16,18 +17,29 @@ namespace SS
     {
         private Dictionary<string, Cell> table; //holds cell location and contents/value
         private DependencyGraph dg = new DependencyGraph(); //holds dependencies
-        private static Regex r = new Regex(@"[a-zA-Z]+[1-9]\d*", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
+        private static Regex IsValid = new Regex(@"[a-zA-Z]+[1-9]\d*", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
+        private bool IsChanged; //var to tell if ss has been changed since last save
 
         /// <summary>
-        /// A spreadsheet consists of an infinite number of named cells.
+        /// An AbstractSpreadsheet object represents the state of a simple spreadsheet.  A 
+        /// spreadsheet consists of a regular expression (called IsValid below) and an infinite 
+        /// number of named cells.
         /// 
-        /// A string s is a valid cell name if and only if it consists of one or more letters, 
-        /// followed by a non-zero digit, followed by zero or more digits.
+        /// A string is a valid cell name if and only if (1) s consists of one or more letters, 
+        /// followed by a non-zero digit, followed by zero or more digits AND (2) the C#
+        /// expression IsValid.IsMatch(s.ToUpper()) is true.
         /// 
-        /// For example, "A15", "a15", "XY32", and "BC7" are valid cell names.  On the other hand, 
-        /// "Z", "X07", and "hello" are not valid cell names.
+        /// For example, "A15", "a15", "XY32", and "BC7" are valid cell names, so long as they also
+        /// are accepted by IsValid.  On the other hand, "Z", "X07", and "hello" are not valid cell 
+        /// names, regardless of IsValid.
         /// 
-        /// A spreadsheet contains a unique cell corresponding to each possible cell name.  
+        /// Any valid incoming cell name, whether passed as a parameter or embedded in a formula,
+        /// must be normalized by converting all letters to upper case before it is used by this 
+        /// this spreadsheet.  For example, the Formula "x3+a5" should be normalize to "X3+A5" before 
+        /// use.  Similarly, all cell names and Formulas that are returned or written to a file must also
+        /// be normalized.
+        /// 
+        /// A spreadsheet contains a unique cell corresponding to every possible cell name.  
         /// In addition to a name, each cell has a contents and a value.  The distinction is
         /// important, and it is important that you understand the distinction and use
         /// the right term when writing code, writing comments, and asking questions.
@@ -62,6 +74,13 @@ namespace SS
         public Spreadsheet() => table = new Dictionary<string, Cell>();
 
         /// <summary>
+        /// True if this spreadsheet has been modified since it was created or saved
+        /// (whichever happened most recently); false otherwise.
+        /// </summary>
+        public override bool Changed { get => IsChanged; protected set => IsChanged = value; }
+
+
+        /// <summary>
         /// If name is null or invalid, throws an InvalidNameException.
         /// 
         /// Otherwise, returns the contents (as opposed to the value) of the named cell.  The return
@@ -69,12 +88,8 @@ namespace SS
         /// </summary>
         public override object GetCellContents(string name)
         {
-            if (name == null || !r.IsMatch(name)) //check for inproper name
-            {
-                throw new InvalidNameException();
-            }
-
-            if(table.TryGetValue(name, out Cell cell)) //pull appropriate cell from spreadsheet
+            name = NameIsValid(name);
+            if (table.TryGetValue(name, out Cell cell)) //pull appropriate cell from spreadsheet
             {
                 return cell.contents;
             }
@@ -87,18 +102,20 @@ namespace SS
         /// </summary>
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
         {
+            Changed = true;
             IEnumerable<string> keys = table.Keys; //pull all cells
             HashSet<string> nonEmptyCells = new HashSet<string>(); //container for nonempty cells names
-            
-            foreach(string s in keys) //find nonempty cells
+
+            foreach (string s in keys) //find nonempty cells
             {
-               if( table.TryGetValue(s, out Cell cell)) {
+                if (table.TryGetValue(s, out Cell cell))
+                {
                     if (!cell.contents.Equals(""))
                     {
                         nonEmptyCells.Add(s);
                     }
                 }
-                
+
             }
             return nonEmptyCells;
         }
@@ -106,27 +123,25 @@ namespace SS
         /// <summary>
         /// If name is null or invalid, throws an InvalidNameException.
         /// 
-        /// Otherwise, the contents of the named cell becomes number.  The method returns a
+        /// Otherwise, the contents of the named cell becomes numbeIsValid.  The method returns a
         /// set consisting of name plus the names of all other cells whose value depends, 
         /// directly or indirectly, on the named cell.
         /// 
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
         /// set {A1, B1, C1} is returned.
         /// </summary>
-        public override ISet<string> SetCellContents(string name, double number)
+        protected override ISet<string> SetCellContents(string name, double number)
         {
-            if (name == null || !r.IsMatch(name)) //check for inappropriate name
-            {
-                throw new InvalidNameException();
-            }
+            name = NameIsValid(name);
 
-            table[name] = new Cell(number); //reset value in dictionary
+            table[name] = new Cell("numbeIsValid", number); //reset value in dictionary
+
 
             // create iset full of dependencies both direct and indirect
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
-            
-            foreach(string s in indirectDependents)
+
+            foreach (string s in indirectDependents)
             {
                 dependents.Add(s);
             }
@@ -146,14 +161,16 @@ namespace SS
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
         /// set {A1, B1, C1} is returned.
         /// </summary>
-        public override ISet<string> SetCellContents(string name, string text)
+        protected override ISet<string> SetCellContents(string name, string text)
         {
-            if (name == null || !r.IsMatch(name)) //check inapropriate name
-            {
-                throw new InvalidNameException();
-            }
 
-            table[name] = new Cell(text); //update value
+            if (text == null)
+            {
+                throw new ArgumentNullException("Text is null, please revise");
+            }
+            name = NameIsValid(name);
+
+            table[name] = new Cell(text, text); //update value
 
 
             //crete iset of dependencies both direct and indirect
@@ -167,7 +184,9 @@ namespace SS
 
             return dependents;
         }
-
+        //******************************************************************
+        //ask if first line of summary means i have to deal with it
+        //*******************************************************************
         /// <summary>
         /// Requires that all of the variables in formula are valid cell names.
         /// 
@@ -183,18 +202,15 @@ namespace SS
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
         /// set {A1, B1, C1} is returned.
         /// </summary>
-        public override ISet<string> SetCellContents(string name, Formula formula)
+        protected override ISet<string> SetCellContents(string name, Formula formula)
         {
-            if (name == null || !r.IsMatch(name)) //check for inapropriate name
-            {
-                throw new InvalidNameException();
-            }
+            name = NameIsValid(name);
 
-            foreach(string var in formula.GetVariables()) //add dependencies to dictionary
+            foreach (string var in formula.GetVariables()) //add dependencies to dictionary
             {
                 dg.AddDependency(var, name);
             }
-            
+
             //create set of dependencies both indirect and direct
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
@@ -204,7 +220,10 @@ namespace SS
                 dependents.Add(s);
             }
 
-            table[name] = new Cell(formula); //update dictionary
+            double value;
+
+            formula.Evaluate(s => table.TryGetValue(s, out Cell cell)))
+            table[name] = new Cell(new Formula(formula.ToString(), s => s = s.ToUpper(), v => true), formula.); //update dictionary
 
             return dependents;
         }
@@ -228,28 +247,137 @@ namespace SS
         /// </summary>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
+            Changed = true;
             if (name == null)
             {
                 throw new ArgumentNullException();
             }
-            if (!r.IsMatch(name))
+            if (!IsValid.IsMatch(name.ToUpper()))
             {
                 throw new InvalidNameException();
             }
 
-            return dg.GetDependees(name);
+            return dg.GetDependees(name.ToUpper());
         }
 
+        /// <summary>
+        /// Writes the contents of this spreadsheet to dest using an XML format.
+        /// The XML elements should be structured as follows:
+        ///
+        /// <spreadsheet IsValid="IsValid regex goes here">
+        ///   <cell name="cell name goes here" contents="cell contents go here"></cell>
+        ///   <cell name="cell name goes here" contents="cell contents go here"></cell>
+        ///   <cell name="cell name goes here" contents="cell contents go here"></cell>
+        /// </spreadsheet>
+        ///
+        /// The value of the IsValid attribute should be IsValid.ToString()
+        /// 
+        /// There should be one cell element for each non-empty cell in the spreadsheet.
+        /// If the cell contains a string, the string (without surrounding double quotes) should be written as the contents.
+        /// If the cell contains a double d, d.ToString() should be written as the contents.
+        /// If the cell contains a Formula f, f.ToString() with "=" prepended should be written as the contents.
+        ///
+        /// If there are any problems writing to dest, the method should throw an IOException.
+        /// </summary>
+        /// <param name="dest"></param>
+        public override void Save(TextWriter dest)
+        {
+            Changed = true;
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// If name is null or invalid, throws an InvalidNameException.
+        ///
+        /// Otherwise, returns the value (as opposed to the contents) of the named cell.  The return
+        /// value should be either a string, a double, or a FormulaError.
+        /// </summary>
+        public override object GetCellValue(string name)
+        {
 
 
+            name = name.ToUpper();
+            if (table.TryGetValue(name, out Cell cell))
+            {
+                return cell.value;
+            }
 
+            return ""; //NEED TO ASK SOMEONE IF I RETURN EMPTY STRING OR INVALIDNAMEEXCEPTION 
+            //*************************************************************
+        }
+
+        /// <summary>
+        /// If content is null, throws an ArgumentNullException.
+        ///
+        /// Otherwise, if name is null or invalid, throws an InvalidNameException.
+        ///
+        /// Otherwise, if content parses as a double, the contents of the named
+        /// cell becomes that double.
+        ///
+        /// Otherwise, if content begins with the character '=', an attempt is made
+        /// to parse the remainder of content into a Formula f using the Formula
+        /// constructor with s => s.ToUpper() as the normalizer and a validator that
+        /// checks that s is a valid cell name as defined in the AbstractSpreadsheet
+        /// class comment.  There are then three possibilities:
+        ///
+        ///   (1) If the remainder of content cannot be parsed into a Formula, a
+        ///       Formulas.FormulaFormatException is thrown.
+        ///
+        ///   (2) Otherwise, if changing the contents of the named cell to be f
+        ///       would cause a circular dependency, a CircularException is thrown.
+        ///
+        ///   (3) Otherwise, the contents of the named cell becomes f.
+        ///
+        /// Otherwise, the contents of the named cell becomes content.
+        ///
+        /// If an exception is not thrown, the method returns a set consisting of
+        /// name plus the names of all other cells whose value depends, directly
+        /// or indirectly, on the named cell.
+        ///
+        /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
+        /// set {A1, B1, C1} is returned.
+        /// </summary>
+        public override ISet<string> SetContentsOfCell(string name, string content)
+        {
+            Changed = true;
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// return if the given string is a valid name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        private string NameIsValid(string name)
+        {
+            Changed = true;
+            if (name == null || !IsValid.IsMatch(name.ToUpper())) //check for inproper name
+            {
+                throw new InvalidNameException();
+            }
+
+            return name.ToUpper();
+        }
+
+        private double VariableLookUp(string s)
+        {
+            if (table.TryGetValue(s, out Cell cell))
+            {
+                if (Double.TryParse(cell.value, out double value))
+                {
+                    return value;
+                }
+            }
+
+            throw new UndefinedVariableException("No such var exists, please revise");
+        }
     }
 
     /// <summary>
     /// individual container for contents and value of spreadsheets
     /// </summary>
     public struct Cell
-    { 
+    {
         /// <summary>
         /// Contents within the cell
         /// </summary>
@@ -267,9 +395,11 @@ namespace SS
         public Cell(object _contents, object _value = null)
         {
             this.contents = _contents;
-            this.value = _value; 
+            this.value = _value;
         }
     }
+
+
 
 }
 
