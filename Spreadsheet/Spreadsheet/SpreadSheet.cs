@@ -142,17 +142,15 @@ namespace SS
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
             dependents.Add(name);
 
-            foreach(string s in indirectDependents)
-
             foreach (string s in indirectDependents)
             {
                 dependents.Add(s);
             }
 
-            foreach(string s in dependents)
+            foreach(string n in dependents)
             {
-                table.TryGetValue(s, out Cell cell);
-                SetCellContents(s, (Formula) cell.contents);
+                table.TryGetValue(n, out Cell cell);
+                SetCellContents(n, (Formula) cell.contents);
             }
 
             return dependents;
