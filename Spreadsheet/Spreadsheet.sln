@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Spreadsheet", "Spreadsheet\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PS6DevelopmentTests", "PS6DevelopmentTests\PS6DevelopmentTests.csproj", "{2145911F-6669-4308-A0F2-63B4C2AAAE5E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PS5GradingTests", "PS5GradingTests\PS5GradingTests.csproj", "{1C99F6AA-F242-49AD-A1C4-8B60B583351D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -70,6 +72,10 @@ Global
 		{5CE891A3-87AB-409B-874D-AD3622C5F59F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5CE891A3-87AB-409B-874D-AD3622C5F59F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CE891A3-87AB-409B-874D-AD3622C5F59F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C99F6AA-F242-49AD-A1C4-8B60B583351D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C99F6AA-F242-49AD-A1C4-8B60B583351D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C99F6AA-F242-49AD-A1C4-8B60B583351D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C99F6AA-F242-49AD-A1C4-8B60B583351D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9025A594-DF2A-4E6A-B8C2-F087ECC3E203}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2145911F-6669-4308-A0F2-63B4C2AAAE5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2145911F-6669-4308-A0F2-63B4C2AAAE5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
