@@ -88,7 +88,7 @@ namespace SS
         /// </summary>
         public override object GetCellContents(string name)
         {
-            name = NameIsValid(name);
+            name = NormalizedName(name);
             if (table.TryGetValue(name, out Cell cell)) //pull appropriate cell from spreadsheet
             {
                 return cell.contents;
@@ -132,7 +132,7 @@ namespace SS
         /// </summary>
         protected override ISet<string> SetCellContents(string name, double number)
         {
-            name = NameIsValid(name);
+            name = NormalizedName(name);
 
             table[name] = new Cell("numbeIsValid", number); //reset value in dictionary
 
@@ -144,6 +144,12 @@ namespace SS
             foreach (string s in indirectDependents)
             {
                 dependents.Add(s);
+            }
+
+            foreach(string s in dependents)
+            {
+                table.TryGetValue(s, out Cell cell);
+                SetCellContents(s, (Formula) cell.contents);
             }
 
             return dependents;
@@ -168,7 +174,7 @@ namespace SS
             {
                 throw new ArgumentNullException("Text is null, please revise");
             }
-            name = NameIsValid(name);
+            name = NormalizedName(name);
 
             table[name] = new Cell(text, text); //update value
 
@@ -184,9 +190,7 @@ namespace SS
 
             return dependents;
         }
-        //******************************************************************
-        //ask if first line of summary means i have to deal with it
-        //*******************************************************************
+
         /// <summary>
         /// Requires that all of the variables in formula are valid cell names.
         /// 
@@ -204,7 +208,7 @@ namespace SS
         /// </summary>
         protected override ISet<string> SetCellContents(string name, Formula formula)
         {
-            name = NameIsValid(name);
+            name = NormalizedName(name);
 
             foreach (string var in formula.GetVariables()) //add dependencies to dictionary
             {
@@ -219,11 +223,8 @@ namespace SS
             {
                 dependents.Add(s);
             }
-
-            double value;
-
-            formula.Evaluate(s => table.TryGetValue(s, out Cell cell)))
-            table[name] = new Cell(new Formula(formula.ToString(), s => s = s.ToUpper(), v => true), formula.); //update dictionary
+     
+            table[name] = new Cell(new Formula(formula.ToString(), s => s = s.ToUpper(), v => true), formula.Evaluate(s => (double) this.GetCellValue(s))); //update dictionary
 
             return dependents;
         }
@@ -296,14 +297,13 @@ namespace SS
         {
 
 
-            name = name.ToUpper();
+            name = NormalizedName(name);
             if (table.TryGetValue(name, out Cell cell))
             {
                 return cell.value;
             }
 
-            return ""; //NEED TO ASK SOMEONE IF I RETURN EMPTY STRING OR INVALIDNAMEEXCEPTION 
-            //*************************************************************
+            return ""; 
         }
 
         /// <summary>
@@ -344,11 +344,11 @@ namespace SS
         }
 
         /// <summary>
-        /// return if the given string is a valid name
+        /// return normalized version of string name if name is a valid name
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        private string NameIsValid(string name)
+        private string NormalizedName(string name)
         {
             Changed = true;
             if (name == null || !IsValid.IsMatch(name.ToUpper())) //check for inproper name
@@ -359,18 +359,7 @@ namespace SS
             return name.ToUpper();
         }
 
-        private double VariableLookUp(string s)
-        {
-            if (table.TryGetValue(s, out Cell cell))
-            {
-                if (Double.TryParse(cell.value, out double value))
-                {
-                    return value;
-                }
-            }
-
-            throw new UndefinedVariableException("No such var exists, please revise");
-        }
+        
     }
 
     /// <summary>
@@ -392,7 +381,7 @@ namespace SS
         /// </summary>
         /// <param name="_contents"></param>
         /// <param name="_value"></param>
-        public Cell(object _contents, object _value = null)
+        public Cell(object _contents, object _value)
         {
             this.contents = _contents;
             this.value = _value;
