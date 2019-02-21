@@ -153,6 +153,10 @@ namespace SS
             {
                 throw new InvalidNameException();
             }
+            if(text == null)
+            {
+                throw new ArgumentNullException();
+            }
 
             table[name] = new Cell(text); //update value
 
