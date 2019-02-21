@@ -125,7 +125,8 @@ namespace SS
             // create iset full of dependencies both direct and indirect
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
-            
+            dependents.Add(name);
+
             foreach(string s in indirectDependents)
             {
                 dependents.Add(s);
@@ -159,6 +160,7 @@ namespace SS
             //crete iset of dependencies both direct and indirect
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
+            dependents.Add(name);
 
             foreach (string s in indirectDependents)
             {
@@ -198,6 +200,7 @@ namespace SS
             //create set of dependencies both indirect and direct
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
+            dependents.Add(name);
 
             foreach (string s in indirectDependents)
             {
