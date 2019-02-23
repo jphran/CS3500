@@ -16,7 +16,7 @@ namespace SS
     {
         private Dictionary<string, Cell> table; //holds cell location and contents/value
         private DependencyGraph dg = new DependencyGraph(); //holds dependencies
-        private static Regex r = new Regex(@"[a-zA-Z]+[1-9]\d*", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
+        private static Regex r = new Regex(@"^[a-zA-Z]+[1-9]\d*$", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
 
         /// <summary>
         /// A spreadsheet consists of an infinite number of named cells.
@@ -244,7 +244,7 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            return dg.GetDependees(name);
+            return dg.GetDependents(name);
         }
 
 
