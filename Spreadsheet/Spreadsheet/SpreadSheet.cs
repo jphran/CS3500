@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Schema;
 using Dependencies;
 using Formulas;
 
@@ -17,8 +19,8 @@ namespace SS
     {
         private Dictionary<string, Cell> table; //holds cell location and contents/value
         private DependencyGraph dg = new DependencyGraph(); //holds dependencies
-        private static Regex r = new Regex(@"^[a-zA-Z]+[1-9]\d*$", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
-        private static Regex IsValid = new Regex(@"[a-zA-Z]+[1-9]\d*", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
+        private static Regex IsValidCellName = new Regex(@"^[a-zA-Z]+[1-9]\d*$", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
+        private Regex IsValid = new Regex(@"(?s).*"); //regex matches any string and whitespace
         private bool IsChanged; //var to tell if ss has been changed since last save
 
         /// <summary>
@@ -73,6 +75,95 @@ namespace SS
         /// dependency.
         /// </summary>
         public Spreadsheet() => table = new Dictionary<string, Cell>();
+
+        /// <summary>
+        /// Creates an empty Spreadsheet whose IsValid regular expression is provided as the parameter
+        /// </summary>
+        /// <param name="isValid"></param>
+        public Spreadsheet(Regex isValid)
+        {
+            this.IsValid = isValid;
+        }
+
+        /// <summary>
+        /// Creates a Spreadsheet that is a duplicate of the spreadsheet saved in source.
+        ///
+        /// See the AbstractSpreadsheet.Save method and Spreadsheet.xsd for the file format 
+        /// specification.  
+        ///
+        /// If there's a problem reading source, throws an IOException.
+        ///
+        /// Else if the contents of source are not consistent with the schema in Spreadsheet.xsd, 
+        /// throws a SpreadsheetReadException.  
+        ///
+        /// Else if the IsValid string contained in source is not a valid C# regular expression, throws
+        /// a SpreadsheetReadException.  (If the exception is not thrown, this regex is referred to
+        /// below as oldIsValid.)
+        ///
+        /// Else if there is a duplicate cell name in the source, throws a SpreadsheetReadException.
+        /// (Two cell names are duplicates if they are identical after being converted to upper case.)
+        ///
+        /// Else if there is an invalid cell name or an invalid formula in the source, throws a 
+        /// SpreadsheetReadException.  (Use oldIsValid in place of IsValid in the definition of 
+        /// cell name validity.)
+        ///
+        /// Else if there is an invalid cell name or an invalid formula in the source, throws a
+        /// SpreadsheetVersionException.  (Use newIsValid in place of IsValid in the definition of
+        /// cell name validity.)
+        ///
+        /// Else if there's a formula that causes a circular dependency, throws a SpreadsheetReadException. 
+        ///
+        /// Else, create a Spreadsheet that is a duplicate of the one encoded in source except that
+        /// the new Spreadsheet's IsValid regular expression should be newIsValid.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="newIsValid"></param>
+        public Spreadsheet(TextReader source, Regex newIsValid)
+        {
+            XmlSchemaSet sc = new XmlSchemaSet();
+            sc.Add(null, "Spreadsheet.xsd");
+
+            //config validation
+            XmlReaderSettings settings = new XmlReaderSettings();
+            settings.ValidationType = ValidationType.Schema;
+            settings.Schemas = sc;
+            settings.ValidationEventHandler += ValidationCallback;
+
+            try
+            {
+                using (XmlReader reader = XmlReader.Create(source)) { }
+            }
+            catch
+            {
+                throw new IOException("could not read source");
+            }
+
+            using(XmlReader reader = XmlReader.Create(source, settings))
+            {
+                while (reader.Read())
+                {
+                    if (reader.IsStartElement())
+                    {
+                        switch (reader.Name)
+                        {
+                            //case "IsValid"
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Throws exception if invalid xml format
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private static void ValidationCallback(object sender, ValidationEventArgs e)
+        {
+            throw new SpreadsheetReadException("invalid xml format, please revise");
+        }
+
+        //TODO: Create ctr that duplicates saved file
 
         /// <summary>
         /// True if this spreadsheet has been modified since it was created or saved
@@ -135,7 +226,7 @@ namespace SS
         {
             name = NormalizedName(name);
 
-            table[name] = new Cell("numbeIsValid", number); //reset value in dictionary
+            table[name] = new Cell("numbeIsValid", number, "double"); //reset value in dictionary
 
 
             // create iset full of dependencies both direct and indirect
@@ -148,11 +239,7 @@ namespace SS
                 dependents.Add(s);
             }
 
-            foreach(string n in dependents)
-            {
-                table.TryGetValue(n, out Cell cell);
-                SetCellContents(n, (Formula) cell.contents);
-            }
+            RecalculateCells(dependents);
 
             return dependents;
         }
@@ -177,12 +264,12 @@ namespace SS
                 throw new ArgumentNullException("Text is null, please revise");
             }
             name = NormalizedName(name);
-            if(text == null)
+            if (text == null)
             {
                 throw new ArgumentNullException();
             }
 
-            table[name] = new Cell(text, text); //update value
+            table[name] = new Cell(text, text, "string"); //update value
 
 
             //crete iset of dependencies both direct and indirect
@@ -194,6 +281,7 @@ namespace SS
             {
                 dependents.Add(s);
             }
+
 
             return dependents;
         }
@@ -231,8 +319,10 @@ namespace SS
             {
                 dependents.Add(s);
             }
-     
-            table[name] = new Cell(new Formula(formula.ToString(), s => s = s.ToUpper(), v => true), formula.Evaluate(s => (double) this.GetCellValue(s))); //update dictionary
+
+            RecalculateCells(dependents);
+
+            table[name] = new Cell(new Formula(formula.ToString(), s => s = s.ToUpper(), v => true), formula.Evaluate(s => (double)this.GetCellValue(s)), "formula"); //update dictionary
 
             return dependents;
         }
@@ -261,7 +351,7 @@ namespace SS
             {
                 throw new ArgumentNullException();
             }
-            if (!IsValid.IsMatch(name.ToUpper()))
+            if (!IsValidCellName.IsMatch(name.ToUpper()))
             {
                 throw new InvalidNameException();
             }
@@ -291,8 +381,50 @@ namespace SS
         /// <param name="dest"></param>
         public override void Save(TextWriter dest)
         {
-            Changed = true;
-            throw new NotImplementedException();
+            Changed = false;
+            IEnumerable<string> nonEmptyCells = GetNamesOfAllNonemptyCells();
+
+            using (XmlWriter writer = XmlWriter.Create(dest))
+            {
+                try
+                {
+                    writer.WriteStartDocument();
+                    writer.WriteStartElement("spreadsheet");
+                    writer.WriteAttributeString("InValid", IsValid.ToString());
+
+                    foreach (string s in nonEmptyCells)
+                    {
+                        table.TryGetValue(s, out Cell cell);
+
+                        writer.WriteStartElement("cell");
+                        writer.WriteAttributeString("cell", s);
+                        if (cell.type.Equals("formula"))
+                        {
+                            writer.WriteAttributeString("contents", cell.contents.ToString().Insert(0, "="));
+                        }
+                        else if (cell.type.Equals("double"))
+                        {
+                            writer.WriteAttributeString("contents", cell.value.ToString());
+                        }
+                        else
+                        {
+                            writer.WriteAttributeString("contents", cell.contents.ToString());
+                        }
+                        writer.WriteEndElement();
+                    }
+
+                    writer.WriteEndElement();
+                    writer.WriteEndDocument();
+                }
+                catch(IOException e)
+                {
+                    throw new IOException();
+                }
+            }
+            //XmlDocument doc = new XmlDocument();
+            //XmlNode docNode = doc.CreateXmlDeclaration("1.0", "UTF-8", null);
+            //doc.AppendChild(docNode);
+
         }
 
         /// <summary>
@@ -303,15 +435,13 @@ namespace SS
         /// </summary>
         public override object GetCellValue(string name)
         {
-
-
             name = NormalizedName(name);
             if (table.TryGetValue(name, out Cell cell))
             {
                 return cell.value;
             }
 
-            return ""; 
+            return "";
         }
 
         /// <summary>
@@ -348,8 +478,26 @@ namespace SS
         public override ISet<string> SetContentsOfCell(string name, string content)
         {
             Changed = true;
-            throw new NotImplementedException();
-            return dg.GetDependents(name);
+            if(content == null)
+            {
+                throw new ArgumentNullException("null context, please revise");
+            }
+            name = NormalizedName(name);
+
+            ISet<string> dependents;
+
+            if (Double.TryParse(content, out double doubleContent))
+            {
+                dependents = new HashSet<string>(SetCellContents(name, doubleContent));
+            }
+            else if (Regex.IsMatch(content, @"^=", RegexOptions.IgnorePatternWhitespace))
+            {
+                Formula f = new Formula(content.Substring(1), s => s.ToUpper(), s => IsValid.IsMatch(s));
+                dependents = new HashSet<string>(SetCellContents(name, f));
+            }
+            else { dependents = new HashSet<string>(SetCellContents(name, content)); }
+
+            return dependents;
         }
 
         /// <summary>
@@ -360,7 +508,7 @@ namespace SS
         private string NormalizedName(string name)
         {
             Changed = true;
-            if (name == null || !IsValid.IsMatch(name.ToUpper())) //check for inproper name
+            if (name == null || !IsValidCellName.IsMatch(name.ToUpper())) //check for inproper name
             {
                 throw new InvalidNameException();
             }
@@ -368,7 +516,20 @@ namespace SS
             return name.ToUpper();
         }
 
-        
+        /// <summary>
+        /// updates dependents cell values 
+        /// </summary>
+        /// <param name="dependents"></param>
+        private void RecalculateCells(IEnumerable<string> dependents)
+        {
+            foreach (string s in dependents)
+            {
+                table.TryGetValue(s, out Cell cell);
+                SetCellContents(s, (Formula)cell.contents);
+            }
+        }
+
+
     }
 
     /// <summary>
@@ -384,16 +545,22 @@ namespace SS
         /// Value of cell in spreadsheet
         /// </summary>
         public object value; //needed for PS6
+        /// <summary>
+        /// type of contents
+        /// </summary>
+        public string type;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="_contents"></param>
         /// <param name="_value"></param>
-        public Cell(object _contents, object _value)
+        /// <param name="type"></param>
+        public Cell(object _contents, object _value, string _type)
         {
             this.contents = _contents;
             this.value = _value;
+            this.type = _type;
         }
     }
 
