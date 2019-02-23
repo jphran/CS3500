@@ -17,6 +17,7 @@ namespace SS
     {
         private Dictionary<string, Cell> table; //holds cell location and contents/value
         private DependencyGraph dg = new DependencyGraph(); //holds dependencies
+        private static Regex r = new Regex(@"^[a-zA-Z]+[1-9]\d*$", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
         private static Regex IsValid = new Regex(@"[a-zA-Z]+[1-9]\d*", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
         private bool IsChanged; //var to tell if ss has been changed since last save
 
@@ -176,6 +177,10 @@ namespace SS
                 throw new ArgumentNullException("Text is null, please revise");
             }
             name = NormalizedName(name);
+            if(text == null)
+            {
+                throw new ArgumentNullException();
+            }
 
             table[name] = new Cell(text, text); //update value
 
@@ -344,6 +349,7 @@ namespace SS
         {
             Changed = true;
             throw new NotImplementedException();
+            return dg.GetDependents(name);
         }
 
         /// <summary>
