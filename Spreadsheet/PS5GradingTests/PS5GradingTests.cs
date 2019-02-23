@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using Formulas;
+using System.IO;
 
 namespace GradingTests
 {
@@ -10,8 +11,10 @@ namespace GradingTests
     /// These are grading tests for PS5
     ///</summary>
     [TestClass()]
-    public class SpreadsheetTest
+    public class SpreadsheetTest : Spreadsheet
     {
+        public override bool Changed { get => throw new NotImplementedException(); protected set => throw new NotImplementedException(); }
+
         /// <summary>
         /// Used to make assertions about set equality.  Everything is converted first to
         /// upper case.
@@ -536,5 +539,49 @@ namespace GradingTests
             return f;
         }
 
+        public override void Save(TextWriter dest)
+        {
+            base.Save(dest);
+        }
+
+        public override object GetCellValue(string name)
+        {
+            return base.GetCellValue(name);
+        }
+
+        public override IEnumerable<string> GetNamesOfAllNonemptyCells()
+        {
+            return base.GetNamesOfAllNonemptyCells();
+        }
+
+        public override object GetCellContents(string name)
+        {
+            return base.GetCellContents(name);
+        }
+
+        public override ISet<string> SetContentsOfCell(string name, string content)
+        {
+            return base.SetContentsOfCell(name, content);
+        }
+
+        protected override ISet<string> SetCellContents(string name, double number)
+        {
+            return base.SetCellContents(name, number);
+        }
+
+        protected override ISet<string> SetCellContents(string name, string text)
+        {
+            return base.SetCellContents(name, text);
+        }
+
+        protected override ISet<string> SetCellContents(string name, Formula formula)
+        {
+            return base.SetCellContents(name, formula);
+        }
+
+        protected override IEnumerable<string> GetDirectDependents(string name)
+        {
+            return base.GetDirectDependents(name);
+        }
     }
 }

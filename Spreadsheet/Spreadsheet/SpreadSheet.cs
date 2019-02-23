@@ -19,8 +19,9 @@ namespace SS
     {
         private Dictionary<string, Cell> table; //holds cell location and contents/value
         private DependencyGraph dg = new DependencyGraph(); //holds dependencies
-        private static Regex IsValidCellName = new Regex(@"^[a-zA-Z]+[1-9]\d*$", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
+        //private static Regex IsValidCellName = new Regex(@"^[a-zA-Z]+[1-9]\d*$", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
         private Regex IsValid = new Regex(@"(?s).*"); //regex matches any string and whitespace
+        private Regex oldIsValid; //for loading saved files
         private bool IsChanged; //var to tell if ss has been changed since last save
 
         /// <summary>
@@ -74,7 +75,12 @@ namespace SS
         /// A1 depends on B1, which depends on C1, which depends on A1.  That's a circular
         /// dependency.
         /// </summary>
-        public Spreadsheet() => table = new Dictionary<string, Cell>();
+        public Spreadsheet()
+        {
+            this.table = new Dictionary<string, Cell>();
+            this.dg = new DependencyGraph();
+        }
+
 
         /// <summary>
         /// Creates an empty Spreadsheet whose IsValid regular expression is provided as the parameter
@@ -82,6 +88,8 @@ namespace SS
         /// <param name="isValid"></param>
         public Spreadsheet(Regex isValid)
         {
+            this.table = new Dictionary<string, Cell>();
+            this.dg = new DependencyGraph();
             this.IsValid = isValid;
         }
 
@@ -120,6 +128,11 @@ namespace SS
         /// <param name="newIsValid"></param>
         public Spreadsheet(TextReader source, Regex newIsValid)
         {
+            this.table = new Dictionary<string, Cell>();
+            this.dg = new DependencyGraph();
+
+            string sourceString = source.ReadToEnd();
+
             XmlSchemaSet sc = new XmlSchemaSet();
             sc.Add(null, "Spreadsheet.xsd");
 
@@ -129,27 +142,98 @@ namespace SS
             settings.Schemas = sc;
             settings.ValidationEventHandler += ValidationCallback;
 
-            try
-            {
-                using (XmlReader reader = XmlReader.Create(source)) { }
-            }
-            catch
-            {
-                throw new IOException("could not read source");
-            }
+            //try
+            //{
+            //    using (XmlReader reader = XmlReader.Create()) { }
+            //}
+            //catch
+            //{
+            //    throw new IOException("could not read source");
+            //}
 
-            using(XmlReader reader = XmlReader.Create(source, settings))
+            using (XmlReader reader = XmlReader.Create(new StringReader(sourceString), settings))
             {
+
                 while (reader.Read())
                 {
                     if (reader.IsStartElement())
                     {
                         switch (reader.Name)
                         {
-                            //case "IsValid"
+                            case "spreadsheet":
+                                try
+                                {
+                                    oldIsValid = new Regex(reader["IsValid"]);
+                                }
+                                catch
+                                {
+                                    throw new SpreadsheetReadException("invalid regex, please revise");
+                                }
+                                break;
+
+                            case "cell":
+                                string name = reader["name"];
+                                string contents = reader["contents"];
+
+                                if (!oldIsValid.IsMatch(name))
+                                {
+                                    throw new SpreadsheetReadException("Invalid cell name, please revise");
+                                }
+                                if (!newIsValid.IsMatch(name))
+                                {
+                                    throw new SpreadsheetVersionException("Invalid cell name, please revise");
+                                }
+                                if (table.TryGetValue(name.ToUpper(), out Cell cell))
+                                {
+                                    throw new SpreadsheetReadException("duplicate cell names, please revise");
+                                }
+
+                                try
+                                {
+                                    if (Regex.IsMatch(contents, @"^=", RegexOptions.IgnorePatternWhitespace))
+                                    {
+                                        Formula f = new Formula(contents.Substring(1), s => s.ToUpper(), v => newIsValid.IsMatch(v));
+                                    }
+                                }
+                                catch (FormulaFormatException e)
+                                {
+                                    throw new SpreadsheetVersionException("Invalid formula, please revise");
+                                }
+
+                                try
+                                {
+                                    if (Regex.IsMatch(contents, @"^=", RegexOptions.IgnorePatternWhitespace))
+                                    {
+                                        Formula f = new Formula(contents.Substring(1), s => s.ToUpper(), v => oldIsValid.IsMatch(v));
+                                    }
+                                }
+                                catch (FormulaFormatException e)
+                                {
+                                    throw new SpreadsheetReadException("Invalid formula, please revise");
+                                }
+
+                                try
+                                {
+                                    SetContentsOfCell(name, contents);
+                                }
+                                catch (CircularException e)
+                                {
+                                    throw new SpreadsheetReadException("Contains circular depencendy, please revise");
+                                }
+                                catch (FormulaFormatException e)
+                                {
+                                    throw new SpreadsheetReadException("Invalid formula, please revise");
+                                }
+                                catch (ArgumentNullException e)
+                                {
+                                    throw new SpreadsheetReadException("Null formula, please revise");
+                                }
+
+                                break;
                         }
                     }
                 }
+                IsValid = newIsValid;
             }
         }
 
@@ -232,7 +316,7 @@ namespace SS
             // create iset full of dependencies both direct and indirect
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
-            dependents.Add(name);
+
 
             foreach (string s in indirectDependents)
             {
@@ -240,6 +324,7 @@ namespace SS
             }
 
             RecalculateCells(dependents);
+            dependents.Add(name);
 
             return dependents;
         }
@@ -275,13 +360,13 @@ namespace SS
             //crete iset of dependencies both direct and indirect
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
-            dependents.Add(name);
+
 
             foreach (string s in indirectDependents)
             {
                 dependents.Add(s);
             }
-
+            dependents.Add(name);
 
             return dependents;
         }
@@ -313,7 +398,7 @@ namespace SS
             //create set of dependencies both indirect and direct
             HashSet<string> dependents = new HashSet<string>(dg.GetDependents(name));
             IEnumerable<string> indirectDependents = GetCellsToRecalculate(dependents);
-            dependents.Add(name);
+
 
             foreach (string s in indirectDependents)
             {
@@ -321,9 +406,17 @@ namespace SS
             }
 
             RecalculateCells(dependents);
+            dependents.Add(name);
 
-            table[name] = new Cell(new Formula(formula.ToString(), s => s = s.ToUpper(), v => true), formula.Evaluate(s => (double)this.GetCellValue(s)), "formula"); //update dictionary
+            try
+            {
 
+                table[name] = new Cell(new Formula(formula.ToString(), s => s = s.ToUpper(), v => IsValid.IsMatch(v)), formula.Evaluate(s => (double)this.GetCellValue(s)), "formula"); //update dictionary
+            }
+            catch (FormulaEvaluationException e)
+            {
+                table[name] = new Cell(new Formula(formula.ToString(), s => s = s.ToUpper(), v => IsValid.IsMatch(v)), new FormulaError(""), "formula"); //update dictionary
+            }
             return dependents;
         }
 
@@ -351,7 +444,7 @@ namespace SS
             {
                 throw new ArgumentNullException();
             }
-            if (!IsValidCellName.IsMatch(name.ToUpper()))
+            if (!IsValid.IsMatch(name.ToUpper()))
             {
                 throw new InvalidNameException();
             }
@@ -383,21 +476,23 @@ namespace SS
         {
             Changed = false;
             IEnumerable<string> nonEmptyCells = GetNamesOfAllNonemptyCells();
+            // var settings = new XmlWriterSettings() { Encoding = Encoding.UTF8 };
 
-            using (XmlWriter writer = XmlWriter.Create(dest))
+
+            using (XmlWriter writer = XmlWriter.Create(dest))  //, settings))
             {
                 try
                 {
                     writer.WriteStartDocument();
                     writer.WriteStartElement("spreadsheet");
-                    writer.WriteAttributeString("InValid", IsValid.ToString());
+                    writer.WriteAttributeString("IsValid", IsValid.ToString());
 
                     foreach (string s in nonEmptyCells)
                     {
                         table.TryGetValue(s, out Cell cell);
 
                         writer.WriteStartElement("cell");
-                        writer.WriteAttributeString("cell", s);
+                        writer.WriteAttributeString("name", s);
                         if (cell.type.Equals("formula"))
                         {
                             writer.WriteAttributeString("contents", cell.contents.ToString().Insert(0, "="));
@@ -416,7 +511,7 @@ namespace SS
                     writer.WriteEndElement();
                     writer.WriteEndDocument();
                 }
-                catch(IOException e)
+                catch (IOException e)
                 {
                     throw new IOException();
                 }
@@ -478,7 +573,7 @@ namespace SS
         public override ISet<string> SetContentsOfCell(string name, string content)
         {
             Changed = true;
-            if(content == null)
+            if (content == null)
             {
                 throw new ArgumentNullException("null context, please revise");
             }
@@ -497,6 +592,7 @@ namespace SS
             }
             else { dependents = new HashSet<string>(SetCellContents(name, content)); }
 
+
             return dependents;
         }
 
@@ -508,7 +604,7 @@ namespace SS
         private string NormalizedName(string name)
         {
             Changed = true;
-            if (name == null || !IsValidCellName.IsMatch(name.ToUpper())) //check for inproper name
+            if (name == null || !IsValid.IsMatch(name.ToUpper())) //check for inproper name
             {
                 throw new InvalidNameException();
             }
