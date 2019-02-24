@@ -296,6 +296,65 @@ namespace SS
             return nonEmptyCells;
         }
 
+
+        /// <summary>
+        /// If content is null, throws an ArgumentNullException.
+        ///
+        /// Otherwise, if name is null or invalid, throws an InvalidNameException.
+        ///
+        /// Otherwise, if content parses as a double, the contents of the named
+        /// cell becomes that double.
+        ///
+        /// Otherwise, if content begins with the character '=', an attempt is made
+        /// to parse the remainder of content into a Formula f using the Formula
+        /// constructor with s => s.ToUpper() as the normalizer and a validator that
+        /// checks that s is a valid cell name as defined in the AbstractSpreadsheet
+        /// class comment.  There are then three possibilities:
+        ///
+        ///   (1) If the remainder of content cannot be parsed into a Formula, a
+        ///       Formulas.FormulaFormatException is thrown.
+        ///
+        ///   (2) Otherwise, if changing the contents of the named cell to be f
+        ///       would cause a circular dependency, a CircularException is thrown.
+        ///
+        ///   (3) Otherwise, the contents of the named cell becomes f.
+        ///
+        /// Otherwise, the contents of the named cell becomes content.
+        ///
+        /// If an exception is not thrown, the method returns a set consisting of
+        /// name plus the names of all other cells whose value depends, directly
+        /// or indirectly, on the named cell.
+        ///
+        /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
+        /// set {A1, B1, C1} is returned.
+        /// </summary>
+        public override ISet<string> SetContentsOfCell(string name, string content)
+        {
+            Changed = true;
+            if (content == null)
+            {
+                throw new ArgumentNullException("null context, please revise");
+            }
+            name = NormalizedName(name);
+
+            ISet<string> dependents;
+
+            if (Double.TryParse(content, out double doubleContent))
+            {
+                dependents = new HashSet<string>(SetCellContents(name, doubleContent));
+            }
+            else if (Regex.IsMatch(content, @"^=", RegexOptions.IgnorePatternWhitespace))
+            {
+                Formula f = new Formula(content.Substring(1), s => s.ToUpper(), s => IsValid.IsMatch(s));
+                dependents = new HashSet<string>(SetCellContents(name, f));
+            }
+            else { dependents = new HashSet<string>(SetCellContents(name, content)); }
+
+
+            return dependents;
+        }
+
+
         /// <summary>
         /// If name is null or invalid, throws an InvalidNameException.
         /// 
@@ -539,62 +598,7 @@ namespace SS
             return "";
         }
 
-        /// <summary>
-        /// If content is null, throws an ArgumentNullException.
-        ///
-        /// Otherwise, if name is null or invalid, throws an InvalidNameException.
-        ///
-        /// Otherwise, if content parses as a double, the contents of the named
-        /// cell becomes that double.
-        ///
-        /// Otherwise, if content begins with the character '=', an attempt is made
-        /// to parse the remainder of content into a Formula f using the Formula
-        /// constructor with s => s.ToUpper() as the normalizer and a validator that
-        /// checks that s is a valid cell name as defined in the AbstractSpreadsheet
-        /// class comment.  There are then three possibilities:
-        ///
-        ///   (1) If the remainder of content cannot be parsed into a Formula, a
-        ///       Formulas.FormulaFormatException is thrown.
-        ///
-        ///   (2) Otherwise, if changing the contents of the named cell to be f
-        ///       would cause a circular dependency, a CircularException is thrown.
-        ///
-        ///   (3) Otherwise, the contents of the named cell becomes f.
-        ///
-        /// Otherwise, the contents of the named cell becomes content.
-        ///
-        /// If an exception is not thrown, the method returns a set consisting of
-        /// name plus the names of all other cells whose value depends, directly
-        /// or indirectly, on the named cell.
-        ///
-        /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
-        /// set {A1, B1, C1} is returned.
-        /// </summary>
-        public override ISet<string> SetContentsOfCell(string name, string content)
-        {
-            Changed = true;
-            if (content == null)
-            {
-                throw new ArgumentNullException("null context, please revise");
-            }
-            name = NormalizedName(name);
 
-            ISet<string> dependents;
-
-            if (Double.TryParse(content, out double doubleContent))
-            {
-                dependents = new HashSet<string>(SetCellContents(name, doubleContent));
-            }
-            else if (Regex.IsMatch(content, @"^=", RegexOptions.IgnorePatternWhitespace))
-            {
-                Formula f = new Formula(content.Substring(1), s => s.ToUpper(), s => IsValid.IsMatch(s));
-                dependents = new HashSet<string>(SetCellContents(name, f));
-            }
-            else { dependents = new HashSet<string>(SetCellContents(name, content)); }
-
-
-            return dependents;
-        }
 
         /// <summary>
         /// return normalized version of string name if name is a valid name

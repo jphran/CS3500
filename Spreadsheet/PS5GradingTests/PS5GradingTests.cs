@@ -176,7 +176,7 @@ namespace GradingTests
             }
             catch (CircularException e)
             {
-                Assert.AreEqual(15, (double)s.GetCellContents("A2"), 1e-9);
+                Assert.AreEqual(15, (double)s.GetCellValue("A2"), 1e-9);
                 throw e;
             }
         }
@@ -347,7 +347,7 @@ namespace GradingTests
             Test31();
         }
 
-        [TestMethod, Timeout(3000)]
+        [TestMethod, Timeout(10000)]
         public void Test35()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -355,20 +355,20 @@ namespace GradingTests
             for (int i = 1; i < 200; i++)
             {
                 cells.Add("A" + i);
-                AssertSetEqualsIgnoreCase(cells, s.SetContentsOfCell("A" + i, "=A" + (i + 1)));
+                AssertSetEqualsIgnoreCase(cells, s.SetContentsOfCell("A" + i, "=A + (i + 1"));
             }
         }
-        [TestMethod, Timeout(3000)]
+        [TestMethod, Timeout(10000)]
         public void Test36()
         {
             Test35();
         }
-        [TestMethod, Timeout(3000)]
+        [TestMethod, Timeout(10000)]
         public void Test37()
         {
             Test35();
         }
-        [TestMethod, Timeout(3000)]
+        [TestMethod, Timeout(10000)]
         public void Test38()
         {
             Test35();
