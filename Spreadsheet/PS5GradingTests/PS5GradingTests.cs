@@ -347,34 +347,34 @@ namespace GradingTests
             Test31();
         }
 
-        [TestMethod,Timeout(3000)]
+        [TestMethod,Timeout(5000)]
         public void Test35()
         {
             AbstractSpreadsheet s = new Spreadsheet();
             ISet<String> cells = new HashSet<string>();
-            for (int i = 1; i < 20; i++)
+            for (int i = 1; i < 200; i++)
             {
                 cells.Add("A" + i);
                 //string form = "=A" + (i+1).ToString();
                 AssertSetEqualsIgnoreCase(cells, s.SetContentsOfCell("A" + i, "=A" + (i+1)));
             }
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test36()
         {
             Test35();
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test37()
         {
             Test35();
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test38()
         {
             Test35();
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(10000)]
         public void Test39()
         {
             AbstractSpreadsheet s = new Spreadsheet();
