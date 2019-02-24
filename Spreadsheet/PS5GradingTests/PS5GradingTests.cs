@@ -79,7 +79,7 @@ namespace GradingTests
         {
             AbstractSpreadsheet s = new Spreadsheet();
             s.SetContentsOfCell("Z7", "1.5");
-            Assert.AreEqual(1.5, (double)s.GetCellContents("Z7"), 1e-9);
+            Assert.AreEqual(1.5, (double)s.GetCellValue("Z7"), 1e-9);
         }
 
         // SETTING CELL TO A STRING
@@ -151,7 +151,7 @@ namespace GradingTests
             s.SetContentsOfCell("A2", "=A1");
         }
 
-        [TestMethod]//, Timeout(3000)]
+        [TestMethod, Timeout(3000)]
         [ExpectedException(typeof(CircularException))]
         public void Test15()
         {
@@ -287,7 +287,7 @@ namespace GradingTests
             AbstractSpreadsheet s = new Spreadsheet();
             s.SetContentsOfCell("A1", "=A2+A3");
             s.SetContentsOfCell("A1", "2.5");
-            Assert.AreEqual(2.5, (double)s.GetCellContents("A1"), 1e-9);
+            Assert.AreEqual(2.5, (double)s.GetCellValue("A1"), 1e-9);
         }
 
         [TestMethod, Timeout(3000)]
