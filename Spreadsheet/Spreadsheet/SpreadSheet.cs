@@ -19,7 +19,7 @@ namespace SS
     {
         private Dictionary<string, Cell> table; //holds cell location and contents/value
         private DependencyGraph dg = new DependencyGraph(); //holds dependencies
-        //private static Regex IsValidCellName = new Regex(@"^[a-zA-Z]+[1-9]\d*$", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
+        private static Regex IsValidCellName = new Regex(@"^[a-zA-Z]+[1-9]\d*$", RegexOptions.IgnorePatternWhitespace); //regex to detect invalid names
         private Regex IsValid = new Regex(@"(?s).*"); //regex matches any string and whitespace
         private Regex oldIsValid; //for loading saved files
         private bool IsChanged; //var to tell if ss has been changed since last save
@@ -449,7 +449,7 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            return dg.GetDependees(name.ToUpper());
+            return dg.GetDependents(name.ToUpper());
         }
 
         /// <summary>
@@ -604,7 +604,7 @@ namespace SS
         private string NormalizedName(string name)
         {
             Changed = true;
-            if (name == null || !IsValid.IsMatch(name.ToUpper())) //check for inproper name
+            if (name == null || !IsValid.IsMatch(name.ToUpper()) || !IsValidCellName.IsMatch(name)) //check for inproper name
             {
                 throw new InvalidNameException();
             }
@@ -618,10 +618,17 @@ namespace SS
         /// <param name="dependents"></param>
         private void RecalculateCells(IEnumerable<string> dependents)
         {
+            if (dependents == null || dependents.Count() == 0)
+            {
+                return;
+            }
+
             foreach (string s in dependents)
             {
-                table.TryGetValue(s, out Cell cell);
-                SetCellContents(s, (Formula)cell.contents);
+                if (table.TryGetValue(s, out Cell cell))
+                {
+                    SetCellContents(s, (Formula)cell.contents);
+                }
             }
         }
 
