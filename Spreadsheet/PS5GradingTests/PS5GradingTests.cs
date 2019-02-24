@@ -374,7 +374,7 @@ namespace GradingTests
         {
             Test35();
         }
-        [TestMethod, Timeout(10000)]
+        [TestMethod, Timeout(5000)]
         public void Test39()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -391,23 +391,23 @@ namespace GradingTests
             {
             }
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test40()
         {
             Test39();
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test41()
         {
             Test39();
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test42()
         {
             Test39();
         }
 
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test43()
         {
             AbstractSpreadsheet s = new Spreadsheet();
@@ -433,38 +433,38 @@ namespace GradingTests
 
         }
 
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test44()
         {
             Test43();
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test45()
         {
             Test43();
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test46()
         {
             Test43();
         }
 
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test47()
         {
             RunRandomizedTest(47, 2519);
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test48()
         {
             RunRandomizedTest(48, 2521);
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test49()
         {
             RunRandomizedTest(49, 2526);
         }
-        [TestMethod, Timeout(1000)]
+        [TestMethod, Timeout(5000)]
         public void Test50()
         {
             RunRandomizedTest(50, 2521);
