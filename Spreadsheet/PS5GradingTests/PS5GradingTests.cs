@@ -355,7 +355,8 @@ namespace GradingTests
             for (int i = 1; i < 200; i++)
             {
                 cells.Add("A" + i);
-                AssertSetEqualsIgnoreCase(cells, s.SetContentsOfCell("A" + i, "=A + (i + 1"));
+                string form = "=A" + (i+1).ToString();
+                AssertSetEqualsIgnoreCase(cells, s.SetContentsOfCell("A" + i, form));
             }
         }
         [TestMethod, Timeout(10000)]
